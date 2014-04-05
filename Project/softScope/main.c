@@ -8,6 +8,7 @@
 #include "leds.h"
 #include "usart.h"
 #include "utils.h"
+#include "inbox.h"
 
 // -- sampling
 #define STATE_IDLE	   ((int32_t)  0)
@@ -23,17 +24,6 @@ volatile uint16_t triggerLevel;
 volatile int32_t state;
 
 
-// -- I/O protocol
-#define HEADER_WORDS  8
-
-// Frame data header
-typedef struct{
-	uint32_t magic;                   // identifies start of header, 0xFFFFFFFF
-	uint32_t samples;                 // number of samples
-	uint32_t trigLev;
-	uint32_t timeBase;
-	uint32_t padding[HEADER_WORDS-4]; // unused space, needed for correct total size
-} header_t;
 
 // -- outbound communication
 static uint8_t *usartBuf;   // embeds outbox and outdata so they can be TX'ed in one go
@@ -41,57 +31,18 @@ static header_t *outbox;    // header written to software, first part of usartBu
 static uint16_t *outData;   // data written to software, second part of usartBuf
 
 
-// -- inbound communication
-static volatile header_t inbox;   // last header sent from software, values can be used
-static volatile header_t _inbuf;  // receive buffer for incoming usart communication, not to be used
-static volatile int _inpos = 0;   // position where next received byte should go in headerArray
 
-// called upon usart RX to handle incoming byte
-// writes to _inbuf until full, then copies to inbox
-void myRXHandler(uint8_t data){
-		LEDOn(LED1);
-		uint8_t* arr = (uint8_t*)(&_inbuf);
- 		arr[_inpos] = data;
-		_inpos++;
-		if (_inpos >= sizeof(header_t)){
-			_inpos = 0;
-			inbox = _inbuf; // header complete, copy to visible header
-
-			// this seems like a good point to read any incoming messages
-			// TODO(a): only one trigLev variable
-			triggerLevel = inbox.trigLev;
-			if(triggerLevel > 4094){
-				triggerLevel = 4096;
-			}
-			if(triggerLevel < 1000){
-				triggerLevel = 1000; // TODO(a): change, only for frame sync
-			}
-			if(inbox.timeBase < 41){
-				inbox.timeBase = 41;
-			}
-			if(inbox.timeBase > 4199){
-				inbox.timeBase = 4199;
-			}
-			if(inbox.timeBase != ADC_PERIOD){
-				init_clock(inbox.timeBase, SAMPLES);     
-				ADC_PERIOD = inbox.timeBase;
-				enable_clock();
-			}
-		}
-		LEDOff(LED1);
-}
 
 
 // Called at the end of TIM3_IRQHandler.
-void TIM3_IRQHook(){
+void TIM3_IRQHook() {
 	if( state == STATE_PROCESS ) {
 		state = STATE_OVERFLOW;
 	} else {
 		state = STATE_PROCESS;
 	}
-
 }
- 
+
 int main(void) {
 	NVIC_PriorityGroupConfig( NVIC_PriorityGroup_4 );
 
@@ -102,7 +53,7 @@ int main(void) {
 	// outbound communication
 	int headerBytes = sizeof(header_t);
 	int dataBytes = SAMPLES*sizeof(outData[0]);
-	usartBuf	    = malloc(headerBytes + dataBytes); 
+	usartBuf	    = malloc(headerBytes + dataBytes);
 	memset(usartBuf, 0, headerBytes + dataBytes);
 
 	outbox = (header_t*)(usartBuf);                      // header is embedded in beginning of usart buffer
@@ -114,19 +65,21 @@ int main(void) {
 	transmitting = 0;
 	triggerLevel = (0xFFF >> 1); // trigger halfway
 
-	init_clock(ADC_PERIOD, SAMPLES);     
+	init_clock(ADC_PERIOD, SAMPLES);
 	clock_TIM3_IRQHook = TIM3_IRQHook;  // Register TIM3_IRQHook to be called at the end of TIM3_IRQHandler
 	init_ADC(samplesBuffer, SAMPLES);
 	init_USART1(115200);
-	USART1_RXHandler = myRXHandler;
+	init_inbox();
 	init_analogIn();
 	init_LEDs();
-	
+
 	state = STATE_IDLE;
 
 	enable_clock();
 
 	LEDOn(LED1);
+
+	int cycle = 0; // for the moment we check the inbox for settings every so many cycles, there's a plan to change that
 
 	while(1) {
 		if( state == STATE_PROCESS ) {
@@ -183,9 +136,8 @@ int main(void) {
 			// Check if the triggerPoint is word aligned, or make it
 			// by advancing the triggerpoint in time
 			uint32_t tmp = (uint32_t) triggerPoint;
-			if( tmp & 0x3 )
-			{
-			    triggerPoint++;
+			if( tmp & 0x3 ) {
+				triggerPoint++;
 			}
 
 			// Update the triggerFrame
@@ -225,6 +177,31 @@ int main(void) {
 		} else if (state == STATE_OVERFLOW ) {
 			GPIO_SetBits(GPIOD, GPIO_Pin_12);
 		}
+
+		if(cycle == 1024) { // check inbox now
+			// this seems like a good point to read any incoming messages
+			// TODO(a): only one trigLev variable
+			triggerLevel = inbox.trigLev;
+			if(triggerLevel > 4094) {
+				triggerLevel = 4096;
+			}
+			if(triggerLevel < 1000) {
+				triggerLevel = 1000; // TODO(a): change, only for frame sync
+			}
+			if(inbox.timeBase < 41) {
+				inbox.timeBase = 41;
+			}
+			if(inbox.timeBase > 4199) {
+				inbox.timeBase = 4199;
+			}
+			if(inbox.timeBase != ADC_PERIOD) {
+				init_clock(inbox.timeBase, SAMPLES);
+				ADC_PERIOD = inbox.timeBase;
+				enable_clock();
+			}
+			cycle = 0;
+		}
+		cycle++;
 	}
 }
 
