@@ -3,22 +3,14 @@
 
 #include <stdint.h>
 
-
-// -- I/O protocol
-#define HEADER_WORDS  8
-
-
-// Frame data header
 typedef struct{
-	uint32_t magic;                   // identifies start of header, 0xFFFFFFFF
-	uint32_t samples;                 // number of samples
-	uint32_t trigLev;
+	uint32_t samples;
 	uint32_t timeBase;
-	uint32_t padding[HEADER_WORDS-4]; // unused space, needed for correct total size
-} header_t;
+	uint32_t trigLev;
+}inbox_t;
 
 
-volatile header_t inbox;   // last header sent from software, values can be used
+volatile inbox_t inbox;
 
 void init_inbox();
 

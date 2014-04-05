@@ -26,11 +26,20 @@ volatile int32_t state;
 
 
 // -- outbound communication
+#define HEADER_WORDS  8
+
+// Frame data header
+typedef struct{
+	uint32_t magic;                   // identifies start of header, 0xFFFFFFFF
+	uint32_t samples;                 // number of samples
+	uint32_t trigLev;
+	uint32_t timeBase;
+	uint32_t padding[HEADER_WORDS-4]; // unused space, needed for correct total size
+} header_t;
+
 static uint8_t *usartBuf;   // embeds outbox and outdata so they can be TX'ed in one go
 static header_t *outbox;    // header written to software, first part of usartBuf
 static uint16_t *outData;   // data written to software, second part of usartBuf
-
-
 
 
 
