@@ -3,29 +3,34 @@
 
 #include "clock.h"
 
+static uint32_t currentClockPeriod, currentIrPeriod;
 
-void enable_clock(){
+void enable_clock() {
 	TIM_Cmd(TIM2, ENABLE);
 	TIM_Cmd(TIM3, ENABLE);
 	TIM_Cmd(TIM4, ENABLE);
 }
 
-void disable_clock(){
+void disable_clock() {
 	TIM_Cmd(TIM2, DISABLE);
 	TIM_Cmd(TIM3, DISABLE);
 	TIM_Cmd(TIM4, DISABLE);
 }
 
-void init_clock(int ADC_PERIOD, int IR_PERIOD) {
+void init_clock(int clockPeriod, int irPeriod) {
+
+	if(clockPeriod == currentClockPeriod && irPeriod == currentIrPeriod) {
+		return; // nothing has changed
+	}
 
 	disable_clock();
-	
+
 	// TIM2 controls the ADC sample rate
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);      // Enable clock to peripheral, APB1 clock: 168MHz/4 = 42 MHz
 	TIM_TimeBaseInitTypeDef TIM2Init = {0, };
 	TIM2Init.TIM_Prescaler     = 1;
 	TIM2Init.TIM_CounterMode   = TIM_CounterMode_Up;
-	TIM2Init.TIM_Period	       = ADC_PERIOD - 1;
+	TIM2Init.TIM_Period	       = clockPeriod - 1;
 	TIM2Init.TIM_ClockDivision = TIM_CKD_DIV1;
 	TIM_TimeBaseInit(TIM2, &TIM2Init );                       // Init but DON'T enable
 	TIM_SelectOutputTrigger(TIM2, TIM_TRGOSource_Update);     // Trigger output on update
@@ -37,7 +42,7 @@ void init_clock(int ADC_PERIOD, int IR_PERIOD) {
 	TIM2Init.TIM_Prescaler     = 1;
 	TIM2Init.TIM_CounterMode   = TIM_CounterMode_Up;
 	TIM2Init.TIM_ClockDivision = TIM_CKD_DIV1;
-	TIM3Init.TIM_Period        = IR_PERIOD - 1; 
+	TIM3Init.TIM_Period        = irPeriod - 1;
 	TIM_TimeBaseInit(TIM3, &TIM3Init );
 	TIM_SelectSlaveMode(TIM3, TIM_SlaveMode_Trigger);	      // TIM3 will be a slave to TIM2
 	TIM_ITRxExternalClockConfig(TIM3, TIM_TS_ITR1);
@@ -59,7 +64,7 @@ void init_clock(int ADC_PERIOD, int IR_PERIOD) {
 	TIM_TimeBaseInitTypeDef TIM4Init = {0, };
 	TIM4Init.TIM_Prescaler       = 1;
 	TIM4Init.TIM_CounterMode     = TIM_CounterMode_Up;
-	TIM4Init.TIM_Period          = (ADC_PERIOD-1) >> 1;       // Wait for half a period before updating (and halting!)
+	TIM4Init.TIM_Period          = (clockPeriod-1) >> 1;       // Wait for half a period before updating (and halting!)
 	TIM4Init.TIM_ClockDivision   = TIM_CKD_DIV1;
 	TIM_TimeBaseInit(TIM4, &TIM4Init );
 	TIM_SelectOnePulseMode(TIM4, TIM_OPMode_Single);	      // Only one pulse (TRGO2 will restart the timer)
@@ -72,7 +77,7 @@ function clock_TIM3_IRQHook;
 
 void TIM3_IRQHandler(void) {
 	TIM_ClearITPendingBit(TIM3, TIM_IT_Update);
- 	if (clock_TIM3_IRQHook != NULL){
+	if (clock_TIM3_IRQHook != NULL) {
 		clock_TIM3_IRQHook();
 	}
 }

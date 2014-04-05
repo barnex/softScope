@@ -26,6 +26,6 @@ function USART_postTXHook;
 typedef void (*byteHandler)(uint8_t);
 
 // Called to handle bytes received on USART1.
-byteHandler USART1_RXHandler; 
+byteHandler USART1_RXHandler;
 
 #endif

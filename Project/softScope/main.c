@@ -8,28 +8,16 @@
 #include "leds.h"
 #include "usart.h"
 #include "utils.h"
-#include "inbox.h"
+#include "settings.h"
 
-// -- sampling
-#define STATE_IDLE	   ((int32_t)  0)
-#define STATE_PROCESS  ((int32_t)  1)
-#define STATE_OVERFLOW ((int32_t) -1)
-
-volatile uint32_t ADC_PERIOD  = 420;  // 100kSamples
-#define SAMPLES	    1024              // Number of samples for each acquisition/frame
-
-volatile uint16_t *samplesBuffer; // The samples buffer is divided into 4 frames
-volatile uint32_t triggerFrame;   // A number between 0..3 that indicates  in which frame we need to look for a trigger
-volatile uint16_t triggerLevel;
-volatile int32_t state;
-
+volatile uint16_t *samplesBuffer;
 
 
 // -- outbound communication
 #define HEADER_WORDS  8
 
 // Frame data header
-typedef struct{
+typedef struct {
 	uint32_t magic;                   // identifies start of header, 0xFFFFFFFF
 	uint32_t samples;                 // number of samples
 	uint32_t trigLev;
@@ -45,172 +33,58 @@ static uint16_t *outData;   // data written to software, second part of usartBuf
 
 // Called at the end of TIM3_IRQHandler.
 void TIM3_IRQHook() {
-	if( state == STATE_PROCESS ) {
-		state = STATE_OVERFLOW;
-	} else {
-		state = STATE_PROCESS;
-	}
+	LEDToggle(LED_OK);
 }
 
-int main(void) {
+void init() {
 	NVIC_PriorityGroupConfig( NVIC_PriorityGroup_4 );
 
 	// ADC
-	samplesBuffer   = malloc(sizeof(uint16_t)*SAMPLES*4);
-	memset((void*)samplesBuffer, 0, sizeof(uint16_t)*SAMPLES*4);
+	samplesBuffer   = malloc(MAX_SAMPLES*sizeof(samplesBuffer[0]));
+	memset((void*)samplesBuffer, 0, MAX_SAMPLES*sizeof(samplesBuffer[0]));
 
 	// outbound communication
 	int headerBytes = sizeof(header_t);
-	int dataBytes = SAMPLES*sizeof(outData[0]);
+	int dataBytes   = MAX_SAMPLES*sizeof(outData[0]);
 	usartBuf	    = malloc(headerBytes + dataBytes);
 	memset(usartBuf, 0, headerBytes + dataBytes);
 
 	outbox = (header_t*)(usartBuf);                      // header is embedded in beginning of usart buffer
 	outData = (uint16_t*)(&usartBuf[headerBytes]);       // data is embedded next
 
-	// triggering
-
-	triggerFrame = 3;
-	transmitting = 0;
-	triggerLevel = (0xFFF >> 1); // trigger halfway
-
-	init_clock(ADC_PERIOD, SAMPLES);
+	init_clock(timebase, IR_PERIOD);
 	clock_TIM3_IRQHook = TIM3_IRQHook;  // Register TIM3_IRQHook to be called at the end of TIM3_IRQHandler
-	init_ADC(samplesBuffer, SAMPLES);
+	init_ADC(samplesBuffer, MAX_SAMPLES);
 	init_USART1(115200);
 	init_inbox();
 	init_analogIn();
 	init_LEDs();
 
-	state = STATE_IDLE;
-
 	enable_clock();
+}
 
-	LEDOn(LED1);
+int main(void) {
+	init();
 
-	int cycle = 0; // for the moment we check the inbox for settings every so many cycles, there's a plan to change that
+	for(;;) {
 
-	while(1) {
-		if( state == STATE_PROCESS ) {
-			GPIO_SetBits(GPIOD, GPIO_Pin_13);
-			/*
-			* TRIGGER DETECTION
-			* The while loop has been unrolled four times, to avoid unnecessary overhead
-			* and the last four samples have been cut-off from the loop to account for possible
-			* pointer wrapping into the start of the circular ADC buffer.
-			*/
-			uint16_t *triggerPoint = NULL;
-			uint16_t *sptr = (uint16_t *) (samplesBuffer + SAMPLES*triggerFrame);
-			uint16_t x0, x1, x2, x3, x4;
-			uint32_t N = (SAMPLES>>2)-2;
-
-			x0 = *sptr++;
-			x1 = *sptr++;
-			x2 = *sptr++;
-			x3 = *sptr++;
-			x4 = *sptr; // x0 = x4 in the next iteration
-			do {
-				if(x0 > triggerLevel) {
-					if( x1 > x0 ) {
-						triggerPoint = sptr-4;
-						N = 0;
-					}
-				} else if( (N != 0) && (x1 > triggerLevel)) {
-					if( x2 > x1 ) {
-						triggerPoint = sptr-3;
-						N = 0;
-					}
-				} else if((N != 0) && (x2 > triggerLevel) ) {
-					if( x3 > x2 ) {
-						triggerPoint = sptr-2;
-						N = 0;
-					}
-				} else if((N != 0) && (x3 > triggerLevel) ) {
-					if( x4 > x3 ) {
-						triggerPoint = sptr-1;
-						N = 0;
-					}
-				}
-
-				// Prepare the data for the next iteration
-				x0 = *sptr++;
-				x1 = *sptr++;
-				x2 = *sptr++;
-				x3 = *sptr++;
-				x4 = *sptr; // x0 = x4 in the next iteration
-			} while(N--);
-			// Process last 4 samples manually
-			// not yet implemented
-
-			// Check if the triggerPoint is word aligned, or make it
-			// by advancing the triggerpoint in time
-			uint32_t tmp = (uint32_t) triggerPoint;
-			if( tmp & 0x3 ) {
-				triggerPoint++;
-			}
-
-			// Update the triggerFrame
-			triggerFrame++;
-			if( triggerFrame == 4 ) {
-				triggerFrame = 0;
-			}
-
-			/*
-			* DATA TRANSFER (IF USART IDLE)
-			*/
-			if(triggerPoint && !transmitting) {
-				// Copy the data, using memcpy for speed reasons
-				if(triggerFrame > 0) {
-					// Data was from frame 0..2
-					memcpy32((uint32_t*)(outData), (uint32_t*)triggerPoint, SAMPLES*2);
-				} else {
-					// This is the number of samples till we wrap to the first frame
-					int32_t samples = (int32_t)(samplesBuffer + 4*SAMPLES - 1 - triggerPoint);
-					// A block needs to be copied from the last frame
-					memcpy32((uint32_t*)(outData), (uint32_t*)triggerPoint, samples*2);
-					// and a part from the first frame
-					memcpy32((uint32_t*)(outData+samples), (uint32_t*)samplesBuffer, (SAMPLES-samples)*2);
-				}
-
-				GPIO_SetBits(GPIOD, GPIO_Pin_14);
-
-				outbox->magic = 0xFFFFFFFF;
-				outbox->samples = inbox.samples; // test transmission, TODO(a): change
-				outbox->trigLev = triggerLevel;
-				outbox->timeBase = ADC_PERIOD;
-				USART_asyncTX(usartBuf, headerBytes + dataBytes);
-
-			}
-			GPIO_ResetBits(GPIOD, GPIO_Pin_13);
-			state = STATE_IDLE;
-		} else if (state == STATE_OVERFLOW ) {
-			GPIO_SetBits(GPIOD, GPIO_Pin_12);
+		while(transmitting) {
+			// wait
 		}
 
-		if(cycle == 1024) { // check inbox now
-			// this seems like a good point to read any incoming messages
-			// TODO(a): only one trigLev variable
-			triggerLevel = inbox.trigLev;
-			if(triggerLevel > 4094) {
-				triggerLevel = 4096;
-			}
-			if(triggerLevel < 1000) {
-				triggerLevel = 1000; // TODO(a): change, only for frame sync
-			}
-			if(inbox.timeBase < 41) {
-				inbox.timeBase = 41;
-			}
-			if(inbox.timeBase > 4199) {
-				inbox.timeBase = 4199;
-			}
-			if(inbox.timeBase != ADC_PERIOD) {
-				init_clock(inbox.timeBase, SAMPLES);
-				ADC_PERIOD = inbox.timeBase;
-				enable_clock();
-			}
-			cycle = 0;
+		volatile int c = 2000000;
+		while(c>0) {
+			c--;
 		}
-		cycle++;
+
+		memcpy((void*)(outData), (void*)samplesBuffer, samples * sizeof(samplesBuffer[0]));
+
+		outbox->magic = 0xFFFFFFFF;
+		outbox->samples = samples;
+		outbox->trigLev = triglev;
+		outbox->timeBase = timebase;
+		USART_asyncTX(usartBuf, sizeof(header_t) + MAX_SAMPLES * sizeof(samplesBuffer[0])); // todo: transfer samples
+
 	}
 }
 

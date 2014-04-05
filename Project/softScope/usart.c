@@ -11,6 +11,7 @@
 
 #include "usart.h"
 #include "leds.h"
+#include "utils.h"
 
 volatile bool transmitting;
 function USART_postTXHook;
@@ -74,12 +75,13 @@ void USART_TX(USART_TypeDef* USARTx, uint8_t *data, uint16_t N) {
 
 void USART_asyncTX(volatile uint8_t *usartBuffer, int bytes) {
 
-	while(transmitting){
-		// wait for previous transmit
+	if(transmitting) {
+		bailout(TX_ERR);
 	}
 
 	transmitting = true;
-				
+	LEDOn(LED_TX);
+
 	// Start transmitting using DMA, interrupt when finished -> transmitting = 0
 	DMA_InitTypeDef usartDMA = {0, };
 	usartDMA.DMA_Channel            = DMA_Channel_4; // channel 4, stream 7 = USART1_TX
@@ -111,16 +113,16 @@ void USART_asyncTX(volatile uint8_t *usartBuffer, int bytes) {
 	USART_DMACmd(USART1, USART_DMAReq_Tx, ENABLE);
 }
 
-byteHandler USART1_RXHandler; 
+byteHandler USART1_RXHandler;
 
 void USART1_IRQHandler() {
- 	// check if the USART1 receive interrupt flag was set
- 	if( USART_GetITStatus(USART1, USART_IT_RXNE) ) {
-		if (USART1_RXHandler != NULL){
+	// check if the USART1 receive interrupt flag was set
+	if( USART_GetITStatus(USART1, USART_IT_RXNE) ) {
+		if (USART1_RXHandler != NULL) {
 			USART1_RXHandler(USART1->DR);
 		}
 		USART_ClearITPendingBit(USART1, USART_IT_RXNE); // clear receive register not empty bit
- 	}
+	}
 }
 
 
@@ -131,8 +133,11 @@ void DMA2_Stream7_IRQHandler() {
 	USART_DMACmd(USART1, USART_DMAReq_Tx, DISABLE);
 	GPIO_ResetBits(GPIOD, GPIO_Pin_14);
 	DMA_Cmd( DMA2_Stream7, DISABLE );
+
 	transmitting = false;
-	if (USART_postTXHook != NULL){
+	LEDOff(LED_TX);
+
+	if (USART_postTXHook != NULL) {
 		USART_postTXHook();
 	}
 }

@@ -13,7 +13,7 @@ type Header struct {
 	Samples  uint32
 	TrigLev  uint32
 	TimeBase uint32
-	padding [HEADER_WORDS-4]uint32
+	padding  [HEADER_WORDS - 4]uint32
 }
 
 //func NewHeader(m map[string]interface{}) Header {
@@ -32,7 +32,7 @@ func (s *Header) WriteTo(w tty) {
 	w.writeInt(s.Samples)
 	w.writeInt(s.TrigLev)
 	w.writeInt(s.TimeBase)
-	for i:=4; i<HEADER_WORDS; i++{
+	for i := 4; i < HEADER_WORDS; i++ {
 		w.writeInt(0)
 	}
 }

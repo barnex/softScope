@@ -31,7 +31,7 @@ func main() {
 	go StreamInput()
 
 	http.HandleFunc("/", rootHandler)
-	http.HandleFunc("/event", eventHandler)
+	http.HandleFunc("/tx/", txHandler)
 	http.HandleFunc("/screen.svg", screenHandler)
 
 	err = http.ListenAndServe(":4000", nil)

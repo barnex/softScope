@@ -14,10 +14,15 @@ void init_LEDs(void) {
 	GPIO_ResetBits(GPIOD, GPIO_Pin_12 | GPIO_Pin_13 | GPIO_Pin_14 | GPIO_Pin_15 );
 }
 
-void LEDOn(uint16_t led){
+void LEDOn(uint16_t led) {
 	GPIO_SetBits(GPIOD, led);
 }
 
-void LEDOff(uint16_t led){
+void LEDOff(uint16_t led) {
 	GPIO_ResetBits(GPIOD, led);
+}
+
+
+void LEDToggle(uint16_t led) {
+	GPIO_ToggleBits(GPIOD, led);
 }

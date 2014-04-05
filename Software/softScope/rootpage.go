@@ -3,33 +3,48 @@ package main
 // Serves the scope's main page.
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
+	"strings"
 )
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, page)
 }
 
-func eventHandler(w http.ResponseWriter, r *http.Request) {
+const TX_MAGIC = 1234567
 
-	switch r.Method {
-	//	case "GET":
-	//		json.NewEncoder(w).Encode(&state)
+func txHandler(w http.ResponseWriter, r *http.Request) {
+	url := r.URL.Path[(len("/tx/")):]
+	split := strings.SplitN(url, "/", 2)
+	cmd := split[0]
+	val, err := strconv.Atoi(split[1])
+	if err != nil {
+		log.Println(err)
+	}
+	fmt.Println("tx", cmd, val)
 
-	case "PUT":
+	// todo: lock tty
+	serial.writeInt(TX_MAGIC)
+	serial.writeInt(binCommand(cmd))
+	serial.writeInt(uint32(val))
+}
 
-		m := make(map[string]interface{})
-		check(json.NewDecoder(r.Body).Decode(&m))
-		fmt.Println("PUT:", m)
-		state := Header{
-			Samples: atoi(m["Samples"]), 
-			TrigLev: atoi(m["TrigLev"]),
-			TimeBase: atoi(m["TimeBase"])}
-		fmt.Println("WriteToTTY:", state)
-		state.WriteTo(serial)
+var binCmds = map[string]uint32{
+	"nop": 0,
+	"samples":  1,
+	"timebase": 2,
+	"triglev":  3,
+	"softgain": 4 }
+
+func binCommand(cmd string) uint32 {
+	if bin, ok := binCmds[strings.ToLower(cmd)]; ok {
+		return bin
+	} else {
+		log.Println("unknown command:", cmd)
+		return 0
 	}
 }
 
@@ -110,15 +125,10 @@ function val(id){
 	return elementById(id).value
 }
 
-function upload(){
+function upload(id){
 	var req = new XMLHttpRequest();
-	req.open("PUT", document.URL + "/event", false);
-	var map = {
-		"Samples": val("Samples"),
-		"TrigLev": val("TrigLev"),
-		"TimeBase": val("TimeBase"),
-		"SoftGain": val("SoftGain")};
-	req.send(JSON.stringify(map));
+	req.open("GET", document.URL + "tx/" + id + "/" + val(id), false);
+	req.send("");
 }
 
 	</script>
@@ -135,10 +145,10 @@ function upload(){
 
 <div style="padding-top:2em;">
 	<table>
-		<tr> <td><b> Samples  </b></td> <td> <input id=Samples  type=number min=1 value=512           onchange="upload();"></td></tr>
-		<tr> <td><b> TrigLev  </b></td> <td> <input id=TrigLev  type=number min=0 value=2000 max=4096 onchange="upload();"></td></tr>
-		<tr> <td><b> TimeBase </b></td> <td> <input id=TimeBase type=number min=1 value=100           onchange="upload();"></td></tr>
-		<tr> <td><b> SoftGain </b></td> <td>-<input id=SoftGain type=number min=0 value=2             onchange="upload();"></td></tr>
+		<tr> <td><b> Samples  </b></td> <td> <input id=Samples  type=number min=1 value=512           onchange="upload('Samples') ;"></td></tr>
+		<tr> <td><b> TrigLev  </b></td> <td> <input id=TrigLev  type=number min=0 value=2000 max=4096 onchange="upload('TrigLev') ;"></td></tr>
+		<tr> <td><b> TimeBase </b></td> <td> <input id=TimeBase type=number min=1 value=100           onchange="upload('TimeBase');"></td></tr>
+		<tr> <td><b> SoftGain </b></td> <td>-<input id=SoftGain type=number min=0 value=2             onchange="upload('SoftGain');"></td></tr>
 	</table>
 </div>
 
