@@ -9,14 +9,13 @@ import (
 	"unsafe"
 )
 
-const (
-	BUFSIZE = 1024
-)
 
 var (
 	serial tty
-	buffer = make([]uint16, BUFSIZE)
+	buffer =make([]uint16, 512, MAXSAMPLES)
 )
+
+const MAXSAMPLES = 4096
 
 func main() {
 	flag.Parse()
@@ -67,6 +66,13 @@ func StreamInput() {
 		header := Header{}
 		serial.ReadFull((*(*[1<<31 - 1]byte)(unsafe.Pointer(&header)))[:4*HEADER_WORDS])
 		fmt.Println("Frame starts with", header)
+
+		if header.Samples > MAXSAMPLES{
+			panic("too large #samples");
+		}
+
+		buffer = buffer[:header.Samples]
+
 		bytes := (*(*[1<<31 - 1]byte)(unsafe.Pointer(&buffer[0])))[:2*len(buffer)]
 		serial.ReadFull(bytes)
 

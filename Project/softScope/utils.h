@@ -10,6 +10,9 @@
 //  * source and destination are word aligned
 void memcpy32(uint32_t *dest, uint32_t *src, uint32_t nBytes);
 
-void bailout();
+// Goes into an infinite loop flashing the error led.
+void panic();
+
+void* emalloc(int nBytes);
 
 #endif

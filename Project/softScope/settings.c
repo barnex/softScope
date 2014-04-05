@@ -3,7 +3,7 @@
 #include "leds.h"
 #include "adc.h"
 
-volatile uint32_t samples    = MAX_SAMPLES;
+volatile uint32_t samples    = 512;    // TODO(a): keep below MAX_NSAMPLES
 volatile uint32_t timebase   = 4200;
 volatile uint32_t trigLev    = (1<<10);
 
@@ -25,11 +25,11 @@ enum {
 };
 
 void setSamples(uint32_t s) {
-	if(s > MAX_SAMPLES) {
-		s = MAX_SAMPLES;
+	if(s > MAX_NSAMPLES) {
+		s = MAX_NSAMPLES;
 	}
-	if(s < MIN_SAMPLES) {
-		s = MIN_SAMPLES;
+	if(s < MIN_NSAMPLES) {
+		s = MIN_NSAMPLES;
 	}
 	samples = s;
 }

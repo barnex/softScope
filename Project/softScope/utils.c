@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #include "utils.h"
 
 void memcpy32(uint32_t *dest, uint32_t *src, uint32_t nBytes) {
@@ -15,6 +17,14 @@ void memcpy32(uint32_t *dest, uint32_t *src, uint32_t nBytes) {
 	}
 }
 
+void* emalloc(int nBytes) {
+	void *ptr = malloc(nBytes);
+	if(ptr == NULL) {
+		panic();
+	}
+	return ptr;
+}
+
 static void delay(int C) {
 	volatile int c = C;
 	while(c > 0) {
@@ -22,7 +32,7 @@ static void delay(int C) {
 	}
 }
 
-void bailout() {
+void panic() {
 	for(;;) {
 		LEDOn(LED_ERR);
 		delay(200000);

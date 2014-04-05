@@ -3,10 +3,10 @@
 
 #include <stdint.h>
 
-
-#define MAX_SAMPLES	    1024              // Number of samples for each acquisition/frame
-#define MIN_SAMPLES	     128
-#define IR_PERIOD      (MAX_SAMPLES/4)
+#define ADC_BUFSIZE	    2048
+#define IR_PERIOD       128
+#define MAX_NSAMPLES    (ADC_BUFSIZE - IR_PERIOD)
+#define MIN_NSAMPLES    (IR_PERIOD)
 
 volatile uint32_t samples ;
 volatile uint32_t timebase;

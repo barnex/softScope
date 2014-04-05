@@ -13,7 +13,7 @@ static uint8_t *usartBuf;   // embeds outHeader and outdata so they can be TX'ed
 
 void init_outbox() {
 	int headerBytes = sizeof(header_t);
-	int dataBytes   = MAX_SAMPLES*sizeof(outData[0]);
+	int dataBytes   = MAX_NSAMPLES*sizeof(outData[0]);
 	usartBuf	    = malloc(headerBytes + dataBytes);
 	memset(usartBuf, 0, headerBytes + dataBytes);
 	outHeader = (header_t*)(usartBuf);                      // header is embedded in beginning of usart buffer
@@ -21,8 +21,8 @@ void init_outbox() {
 }
 
 void outbox_TX(uint32_t nDataBytes) {
-	if(nDataBytes > MAX_SAMPLES * sizeof(outData[0])) {
-		bailout();
+	if(nDataBytes > MAX_NSAMPLES * sizeof(outData[0])) {
+		panic(); // ask to send more than the size of usartBuf
 	}
 	USART_asyncTX(usartBuf, sizeof(header_t) + nDataBytes);
 }
