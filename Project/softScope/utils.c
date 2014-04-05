@@ -22,17 +22,11 @@ static void delay(int C) {
 	}
 }
 
-void bailout(int status) {
-	if(status < 1) {
-		status = 999; // invalid error code
-	}
+void bailout() {
 	for(;;) {
-		for(int i=0; i<status; i++) {
-			LEDOn(LED_ERR);
-			delay(200000);
-			LEDOff(LED_ERR);
-			delay(200000);
-		}
-		delay(2000000);
+		LEDOn(LED_ERR);
+		delay(200000);
+		LEDOff(LED_ERR);
+		delay(200000);
 	}
 }

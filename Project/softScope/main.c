@@ -6,29 +6,12 @@
 #include "adc.h"
 #include "clock.h"
 #include "leds.h"
+#include "outbox.h"
+#include "settings.h"
 #include "usart.h"
 #include "utils.h"
-#include "settings.h"
 
 volatile uint16_t *samplesBuffer;
-
-
-// -- outbound communication
-#define HEADER_WORDS  8
-
-// Frame data header
-typedef struct {
-	uint32_t magic;                   // identifies start of header, 0xFFFFFFFF
-	uint32_t samples;                 // number of samples
-	uint32_t trigLev;
-	uint32_t timeBase;
-	uint32_t padding[HEADER_WORDS-4]; // unused space, needed for correct total size
-} header_t;
-
-static uint8_t *usartBuf;   // embeds outbox and outdata so they can be TX'ed in one go
-static header_t *outbox;    // header written to software, first part of usartBuf
-static uint16_t *outData;   // data written to software, second part of usartBuf
-
 
 
 // Called at the end of TIM3_IRQHandler.
@@ -43,15 +26,7 @@ void init() {
 	samplesBuffer   = malloc(MAX_SAMPLES*sizeof(samplesBuffer[0]));
 	memset((void*)samplesBuffer, 0, MAX_SAMPLES*sizeof(samplesBuffer[0]));
 
-	// outbound communication
-	int headerBytes = sizeof(header_t);
-	int dataBytes   = MAX_SAMPLES*sizeof(outData[0]);
-	usartBuf	    = malloc(headerBytes + dataBytes);
-	memset(usartBuf, 0, headerBytes + dataBytes);
-
-	outbox = (header_t*)(usartBuf);                      // header is embedded in beginning of usart buffer
-	outData = (uint16_t*)(&usartBuf[headerBytes]);       // data is embedded next
-
+	init_outbox();
 	init_clock(timebase, IR_PERIOD);
 	clock_TIM3_IRQHook = TIM3_IRQHook;  // Register TIM3_IRQHook to be called at the end of TIM3_IRQHandler
 	init_ADC(samplesBuffer, MAX_SAMPLES);
@@ -79,11 +54,12 @@ int main(void) {
 
 		memcpy((void*)(outData), (void*)samplesBuffer, samples * sizeof(samplesBuffer[0]));
 
-		outbox->magic = 0xFFFFFFFF;
-		outbox->samples = samples;
-		outbox->trigLev = triglev;
-		outbox->timeBase = timebase;
-		USART_asyncTX(usartBuf, sizeof(header_t) + MAX_SAMPLES * sizeof(samplesBuffer[0])); // todo: transfer samples
+		outHeader->magic = 0xFFFFFFFF;
+		outHeader->samples = samples;
+		outHeader->trigLev = triglev;
+		outHeader->timeBase = timebase;
+		outbox_TX(MAX_SAMPLES*sizeof(samplesBuffer[0]));
+
 
 	}
 }
