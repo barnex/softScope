@@ -5,7 +5,7 @@
 
 #define ADC_BUFSIZE	    2048
 #define IR_PERIOD       128
-#define MAX_NSAMPLES    (ADC_BUFSIZE - IR_PERIOD)
+#define MAX_NSAMPLES    (ADC_BUFSIZE/2)
 #define MIN_NSAMPLES    (IR_PERIOD)
 
 volatile uint32_t samples ;

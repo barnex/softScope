@@ -17,7 +17,7 @@ void init_outbox() {
 	usartBuf	    = malloc(headerBytes + dataBytes);
 	memset(usartBuf, 0, headerBytes + dataBytes);
 	outHeader = (header_t*)(usartBuf);                      // header is embedded in beginning of usart buffer
-	outData = (uint16_t*)(&usartBuf[headerBytes]);       // data is embedded next
+	outData = (uint16_t*)(&usartBuf[headerBytes]);          // data is embedded next
 }
 
 void outbox_TX(uint32_t nDataBytes) {

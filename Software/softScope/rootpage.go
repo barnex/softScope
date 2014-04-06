@@ -31,9 +31,9 @@ func rxHandler(w http.ResponseWriter, r *http.Request) {
 	calls := make([]jsCall, 0, 1)
 	calls = append(calls, jsCall{"setAttr", []interface{}{"NRX", "innerHTML", nrx}})
 	calls = append(calls, jsCall{"setAttr", []interface{}{"screen", "src", "/screen.svg"}})
-	if len(calls) != 0 {
-		fmt.Println("rx", calls) // debug
-	}
+//	if len(calls) != 0 {
+//		fmt.Println("rx", calls) // debug
+//	}
 	check(json.NewEncoder(w).Encode(calls))
 }
 

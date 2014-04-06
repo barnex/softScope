@@ -57,13 +57,12 @@ int main(void) {
 		}
 
 		// TODO(a): rm
-		volatile int c = 2000000;
+		volatile int c = 200000;
 		while(c>0) {
 			c--;
 		}
 
 		memcpy((void*)(outData), (void*)samplesBuffer, MAX_NSAMPLES * sizeof(samplesBuffer[0]));
-
 		outHeader->magic = 0xFFFFFFFF;
 		outHeader->samples = samples;
 		outHeader->trigLev = triglev;
