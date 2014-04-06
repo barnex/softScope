@@ -31,6 +31,7 @@ func main() {
 
 	http.HandleFunc("/", rootHandler)
 	http.HandleFunc("/tx/", txHandler)
+	http.HandleFunc("/rx/", rxHandler)
 	http.HandleFunc("/screen.svg", screenHandler)
 
 	err = http.ListenAndServe(":4000", nil)
@@ -68,7 +69,8 @@ func StreamInput() {
 		fmt.Println("Frame starts with", header)
 
 		if header.Samples > MAXSAMPLES{
-			panic("too large #samples");
+			log.Println("too large #samples");
+			return
 		}
 
 		buffer = buffer[:header.Samples]

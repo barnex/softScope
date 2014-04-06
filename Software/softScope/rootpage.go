@@ -8,10 +8,27 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"encoding/json"
 )
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, page)
+}
+
+
+type Update struct{
+	ID string
+	Attr string
+	Value interface{}
+}
+
+var nrx = 0
+
+func rxHandler(w http.ResponseWriter, r *http.Request) {
+	nrx++
+	var updates []Update
+	updates = append(updates, Update{"NRX", "innerHTML", nrx})
+	check(json.NewEncoder(w).Encode(updates))
 }
 
 const TX_MAGIC = 1234567
@@ -93,10 +110,11 @@ function setAttr(id, attr, value){
 	elem[attr] = value;
 }
 
+var pending = false;
 
 // onreadystatechange function for update http request.
 // updates the DOM with new values received from server.
-function updateDOM(req){
+function onReqReady(req){
 	if (req.readyState == 4) { // DONE
 		if (req.status == 200) {	
 			var resp = JSON.parse(req.responseText);	
@@ -104,19 +122,23 @@ function updateDOM(req){
 			setAttr("TimeBase", "value", resp["TimeBase"]);
 			setAttr("TrigLev", "value", resp["TrigLev"]);
 			setAttr("SoftGain", "value", resp["SoftGain"]);
+			setAttr("screen", "src", resp["Screen"]); 
 		} 
+	pending = false;
 	}
 }
 
 function refresh(){
-	setAttr("screen", "src", "/screen.svg?" + Math.random()) // refresh screen.svg, random cachebreaker
-
-	//var req = new XMLHttpRequest();
-	//req.open("GET", document.URL + "/event", true); 
-	//req.timeout = 2*tick;
-	//req.onreadystatechange = function(){ updateDOM(req) };
-	//req.setRequestHeader("Content-type","application/x-www-form-urlencoded");
-	//req.send("");
+	if(pending){
+		return;
+	}
+	pending = true;
+	var req = new XMLHttpRequest();
+	req.open("GET", document.URL + "/event", true); 
+	req.timeout = 2*tick;
+	req.onreadystatechange = function(){ onReqReady(req) };
+	req.setRequestHeader("Content-type","application/x-www-form-urlencoded");
+	req.send("");
 }
 
 setInterval(refresh, tick);
@@ -137,7 +159,14 @@ function upload(id){
 
 <body>
 	
-	<h1><i>Soft</i>Scope</h1>
+<h1><i>Soft</i>Scope</h1>
+
+<div style="padding-top:2em;">
+	<table>
+		<tr> <td><b> NRX      </b></td> <td> <span id="NRX"> </span>   </td></tr>
+	</table>
+</div>
+
 
 <div>
 	<img id="screen" src="/screen.svg" />
