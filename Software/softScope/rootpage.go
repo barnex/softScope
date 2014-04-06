@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"encoding/json"
-	"time"
+	//"time"
 )
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
@@ -26,15 +26,15 @@ type jsCall struct {
 var nrx = 0
 
 func rxHandler(w http.ResponseWriter, r *http.Request) {
-	time.Sleep(1*time.Second)
+	//time.Sleep(1*time.Second)
 	nrx++
 	calls := make([]jsCall, 0, 1)
 	calls = append(calls, jsCall{"setAttr", []interface{}{"NRX", "innerHTML", nrx}})
+	calls = append(calls, jsCall{"setAttr", []interface{}{"screen", "src", "/screen.svg"}})
 	if len(calls) != 0 {
 		fmt.Println("rx", calls) // debug
 	}
 	check(json.NewEncoder(w).Encode(calls))
-
 }
 
 const TX_MAGIC = 1234567
@@ -95,7 +95,7 @@ const page = `
 
 	<script>
 
-var tick = 50;
+var tick = 100;
 
 // wraps document.getElementById, shows error if not found
 function elementById(id){
@@ -148,11 +148,7 @@ function refresh(){
 	//req.timeout = 2*tick;
 	req.onreadystatechange = function(){ onReqReady(req) };
 	req.setRequestHeader("Content-type","application/x-www-form-urlencoded");
-	try{
-		req.send("");
-	}catch(e){
-		settAttr("errorBox", "innerHTML", Time.now() + ":" + e)
-	}
+	req.send("");
 }
 
 setInterval(refresh, tick);
