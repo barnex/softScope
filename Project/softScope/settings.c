@@ -1,7 +1,9 @@
 #include "settings.h"
-#include "usart.h"
-#include "leds.h"
+
 #include "adc.h"
+#include "clock.h"
+#include "leds.h"
+#include "usart.h"
 
 volatile uint32_t samples    = 512;    // TODO(a): keep below MAX_NSAMPLES
 volatile uint32_t timebase   = 4200;
@@ -45,7 +47,14 @@ void setTriglev(uint32_t t) {
 }
 
 void setTimebase(uint32_t p) {
-	// TODO:
+	if(p < 42){
+		p = 42; // 1MHz
+	}
+	if(p>42000){
+		p = 42000;
+	}
+	init_clock(p, IR_PERIOD);
+	enable_clock();
 }
 
 static void handleIncoming() {
