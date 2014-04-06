@@ -16,19 +16,23 @@ func rootHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 
-type Update struct{
-	ID string
-	Attr string
-	Value interface{}
+type jsCall struct {
+	F    string        // function to call
+	Args []interface{} // function arguments
 }
+
 
 var nrx = 0
 
 func rxHandler(w http.ResponseWriter, r *http.Request) {
 	nrx++
-	var updates []Update
-	updates = append(updates, Update{"NRX", "innerHTML", nrx})
-	check(json.NewEncoder(w).Encode(updates))
+	calls := make([]jsCall, 0, 1)
+	calls = append(calls, jsCall{"setAttr", []interface{}{"NRX", "innerHTML", nrx}})
+	if len(calls) != 0 {
+		fmt.Println("rx", calls) // debug
+	}
+	check(json.NewEncoder(w).Encode(calls))
+
 }
 
 const TX_MAGIC = 1234567
@@ -89,7 +93,7 @@ const page = `
 
 	<script>
 
-var tick = 500;
+var tick = 50;
 
 // wraps document.getElementById, shows error if not found
 function elementById(id){
@@ -118,11 +122,15 @@ function onReqReady(req){
 	if (req.readyState == 4) { // DONE
 		if (req.status == 200) {	
 			var resp = JSON.parse(req.responseText);	
-			setAttr("Samples", "value", resp["Samples"]);
-			setAttr("TimeBase", "value", resp["TimeBase"]);
-			setAttr("TrigLev", "value", resp["TrigLev"]);
-			setAttr("SoftGain", "value", resp["SoftGain"]);
-			setAttr("screen", "src", resp["Screen"]); 
+			for(var i=0; i<resp.length; i++){
+				var r = resp[i];
+				var func = window[r.F];
+				if (func == null) {
+					showErr("undefined: " + r.F);
+				}else{ 
+					func.apply(this, r.Args);
+				}
+			}
 		} 
 	pending = false;
 	}
@@ -134,7 +142,7 @@ function refresh(){
 	}
 	pending = true;
 	var req = new XMLHttpRequest();
-	req.open("GET", document.URL + "/event", true); 
+	req.open("GET", document.URL + "/rx", true); 
 	req.timeout = 2*tick;
 	req.onreadystatechange = function(){ onReqReady(req) };
 	req.setRequestHeader("Content-type","application/x-www-form-urlencoded");
@@ -163,7 +171,7 @@ function upload(id){
 
 <div style="padding-top:2em;">
 	<table>
-		<tr> <td><b> NRX      </b></td> <td> <span id="NRX"> </span>   </td></tr>
+		<tr> <td><b> NRX      </b></td> <td> <span id="NRX">  </span>   </td></tr>
 	</table>
 </div>
 
