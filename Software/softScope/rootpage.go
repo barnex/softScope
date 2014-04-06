@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"encoding/json"
+	"time"
 )
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
@@ -25,6 +26,7 @@ type jsCall struct {
 var nrx = 0
 
 func rxHandler(w http.ResponseWriter, r *http.Request) {
+	time.Sleep(1*time.Second)
 	nrx++
 	calls := make([]jsCall, 0, 1)
 	calls = append(calls, jsCall{"setAttr", []interface{}{"NRX", "innerHTML", nrx}})
@@ -143,10 +145,14 @@ function refresh(){
 	pending = true;
 	var req = new XMLHttpRequest();
 	req.open("GET", document.URL + "/rx", true); 
-	req.timeout = 2*tick;
+	//req.timeout = 2*tick;
 	req.onreadystatechange = function(){ onReqReady(req) };
 	req.setRequestHeader("Content-type","application/x-www-form-urlencoded");
-	req.send("");
+	try{
+		req.send("");
+	}catch(e){
+		settAttr("errorBox", "innerHTML", Time.now() + ":" + e)
+	}
 }
 
 setInterval(refresh, tick);
@@ -168,6 +174,8 @@ function upload(id){
 <body>
 	
 <h1><i>Soft</i>Scope</h1>
+
+<span id="errorBox"> &nbsp; </span>
 
 <div style="padding-top:2em;">
 	<table>
