@@ -5,6 +5,8 @@
 #include "leds.h"
 #include "usart.h"
 
+volatile uint32_t reqFrames  = 0;
+
 volatile uint32_t samples    = 512;    // TODO(a): keep below MAX_NSAMPLES
 volatile uint32_t timebase   = 4200;
 volatile uint32_t trigLev    = (1<<10);
@@ -20,10 +22,11 @@ static message_t incoming;
 static int rxByte = 0;
 
 enum {
-    SAMPLES=  1,
-    TIMEBASE= 2,
-    TRIGLEV=  3,
-    SOFTGAIN= 4
+	INVALID   = 0,
+    SAMPLES   = 1,
+    TIMEBASE  = 2,
+    TRIGLEV   = 3,
+    REQ_FRAMES= 4
 };
 
 void setSamples(uint32_t s) {
@@ -69,6 +72,8 @@ static void handleIncoming() {
 		setTimebase(incoming.value);
 	case TRIGLEV:
 		setTriglev(incoming.value);
+	case REQ_FRAMES:
+		reqFrames = incoming.value;
 	}
 }
 

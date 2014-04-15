@@ -52,14 +52,13 @@ int main(void) {
 	for(;;) {
 
 		while(transmitting) {
-			// wait
+			// wait until previous transmission finished
 		}
 
-		// TODO(a): rm
-		volatile int c = 200000;
-		while(c>0) {
-			c--;
+		while(reqFrames == 0){
+			// wait until frame is requested
 		}
+		reqFrames--;
 
 		memcpy((void*)(outData), (void*)samplesBuffer, MAX_NSAMPLES * sizeof(samplesBuffer[0]));
 		outHeader->magic = 0xFFFFFFFF;

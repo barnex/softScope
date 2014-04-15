@@ -8,6 +8,7 @@
 #define MAX_NSAMPLES    (ADC_BUFSIZE/2)
 #define MIN_NSAMPLES    (IR_PERIOD)
 
+// Number of requested frames. If != 0, send frame and decrement.
 volatile uint32_t reqFrames;
 
 volatile uint32_t samples ;
