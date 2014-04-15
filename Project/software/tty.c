@@ -100,11 +100,18 @@ int openTTY(char* file, int baud) {
 
 int readTTY(int fd, void *buf, int N) {
 	int n = read(fd, buf, N);
+	if(n<0){
+		sprintf(&TTYErr[0], "readTTY: %s", strerror(errno));
+	}
 	return n;
 }
 
 int writeTTY(int fd, void *buf, int N) {
-	return write(fd, buf, N);
+	int n = write(fd, buf, N);
+	if(n<N){
+		sprintf(&TTYErr[0], "writeTTY: %s", strerror(errno));
+	}
+	return n;
 }
 
 void closeTTY(int fd) {

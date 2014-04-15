@@ -26,7 +26,7 @@ func OpenTTY(fname string, baud int) (TTY, error) {
 func (t TTY) Read(p []byte) (n int, err error) {
 	n = int(C.readTTY(C.int(t), unsafe.Pointer(&p[0]), C.int(len(p))))
 	if n <= 0 {
-		return 0, errors.New("tty read error")
+		return 0, errors.New(C.GoString(C.TTYerr))
 	} else {
 		return n, nil
 	}
@@ -35,7 +35,7 @@ func (t TTY) Read(p []byte) (n int, err error) {
 func (t TTY) Write(p []byte) (n int, err error) {
 	n = int(C.writeTTY(C.int(t), unsafe.Pointer(&p[0]), C.int(len(p))))
 	if n != len(p) {
-		return n, errors.New("tty write error")
+		return n, errors.New(C.GoString(C.TTYerr))
 	} else {
 		return n, nil
 	}

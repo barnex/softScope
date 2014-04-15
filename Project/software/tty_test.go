@@ -14,7 +14,6 @@ func TestBadFile(t *testing.T) {
 	}
 }
 
-
 func TestBadBaud(t *testing.T) {
 	_, err := OpenTTY("/dev/ttyUSB0", 666)
 	if err == nil {

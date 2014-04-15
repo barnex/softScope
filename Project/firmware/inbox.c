@@ -12,22 +12,10 @@ volatile uint32_t timebase   = 4200;
 volatile uint32_t trigLev    = (1<<10);
 
 
-typedef struct {
-	uint32_t magic;
-	uint32_t command;
-	uint32_t value;
-} message_t;
 
 static message_t incoming;
 static int rxByte = 0;
 
-enum {
-	INVALID   = 0,
-    SAMPLES   = 1,
-    TIMEBASE  = 2,
-    TRIGLEV   = 3,
-    REQ_FRAMES= 4
-};
 
 void setSamples(uint32_t s) {
 	if(s > MAX_NSAMPLES) {
