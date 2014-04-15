@@ -1,1 +1,1 @@
-Under construction Everything that is our code, falls under the MIT License.
+STM32F4 oscilloscope with web front-end.
