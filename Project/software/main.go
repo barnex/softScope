@@ -1,3 +1,6 @@
+
+//+build ignore
+
 package main
 
 import (
@@ -12,7 +15,7 @@ import (
 
 var (
 	serial tty
-	buffer =make([]uint16, 512, MAXSAMPLES)
+	buffer =make([]uint16, 0, MAXSAMPLES)
 )
 
 const MAXSAMPLES = 4096
@@ -34,7 +37,9 @@ func main() {
 	http.HandleFunc("/rx/", rxHandler)
 	http.HandleFunc("/screen.svg", screenHandler)
 
-	err = http.ListenAndServe(":4000", nil)
+	addr := ":4000"
+	fmt.Println("listening on", addr)
+	err = http.ListenAndServe(addr, nil)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -1,0 +1,5 @@
+package softscope
+
+func Init(){
+
+}
