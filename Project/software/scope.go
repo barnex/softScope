@@ -1,5 +1,5 @@
 package softscope
 
-func Init(ttyDev string, baud int){
+func Init(ttyDev string, baud int) {
 
 }

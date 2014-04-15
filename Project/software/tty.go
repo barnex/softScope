@@ -2,10 +2,10 @@ package softscope
 
 // Access to serial device
 
-import(
+import (
 	"errors"
-	"unsafe"
 	"log"
+	"unsafe"
 )
 
 ////cgo CFLAGS: -Wall -Werror
@@ -17,7 +17,7 @@ type TTY int
 func OpenTTY(fname string, baud int) (TTY, error) {
 	fd := C.openTTY(C.CString(fname), C.int(baud))
 	if fd < 0 {
-		return 0, errors.New(C.GoString(C.TTYErr))
+		return 0, errors.New(C.GoString(C.TTYerr))
 	}
 	return TTY(fd), nil
 }

@@ -1,7 +1,7 @@
 #ifndef _TTY_H_
 #define _TTY_H_
 
-extern char* TTYErr;
+extern char* TTYerr;
 
 int openTTY(char* file, int baud);
 

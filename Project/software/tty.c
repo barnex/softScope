@@ -3,8 +3,10 @@
  */
 #include <errno.h>
 #include <fcntl.h>
+#include <stdio.h>
 #include <string.h>
 #include <termios.h>
+#include <unistd.h>
 
 // pair of baudrate + speed code
 typedef struct {
@@ -46,32 +48,34 @@ int decodeBaud(int rate) {
 	return -1; // not found
 }
 
-char* TTYErr = NULL;
+#define ERRLEN 4096
+static char TTYErr[ERRLEN+1];
+char *TTYerr = &TTYErr[0];
 
 int openTTY(char* file, int baud) {
 
 	// parse baud rate
 	int baudRate = decodeBaud(baud);
 	if(baudRate <= 0) {
-		TTYErr = "invalid baud rate";
+		sprintf(&TTYErr[0], "invalid baud rate: %d", baud); // TODO: snprintf
 		return -1;
 	}
 
 	// open tty
 	int fd = open(file, O_RDWR | O_NOCTTY | O_SYNC);
 	if(fd == -1) {
-		TTYErr = strerror(errno);
+		sprintf(&TTYErr[0], "error opening %s: %s", file, strerror(errno));
 		return -1;
 	}
 	if(!isatty(fd)) {
-		TTYErr = "not a tty";
+		sprintf(&TTYErr[0], "not a tty: %s", file);
 		return -1;
 	}
 
 	// setup tty
 	struct termios config;
 	if(tcgetattr(fd, &config) < 0) {
-		TTYErr = strerror(errno);
+		sprintf(&TTYErr[0], "tcgetattr %s: %s", file, strerror(errno));
 		return -1;
 	}
 	cfmakeraw(&config);
@@ -82,12 +86,12 @@ int openTTY(char* file, int baud) {
 
 	// communication speed
 	if(cfsetispeed(&config, baudRate) < 0 || cfsetospeed(&config, baudRate) < 0) {
-		TTYErr = strerror(errno);
+		sprintf(&TTYErr[0], "tcsetispeed %s: %s", file, strerror(errno));
 		return -1;
 	}
 
 	if(tcsetattr(fd, TCSANOW, &config) != 0) {
-		TTYErr = strerror(errno);
+		sprintf(&TTYErr[0], "tcsetattr %s: %s", file, strerror(errno));
 		return -1;
 	}
 	

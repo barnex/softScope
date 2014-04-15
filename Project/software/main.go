@@ -1,4 +1,3 @@
-
 //+build ignore
 
 package main
@@ -12,10 +11,9 @@ import (
 	"unsafe"
 )
 
-
 var (
 	serial tty
-	buffer =make([]uint16, 0, MAXSAMPLES)
+	buffer = make([]uint16, 0, MAXSAMPLES)
 )
 
 const MAXSAMPLES = 4096
@@ -73,8 +71,8 @@ func StreamInput() {
 		serial.ReadFull((*(*[1<<31 - 1]byte)(unsafe.Pointer(&header)))[:4*HEADER_WORDS])
 		fmt.Println("Frame starts with", header)
 
-		if header.Samples > MAXSAMPLES{
-			log.Println("too large #samples");
+		if header.Samples > MAXSAMPLES {
+			log.Println("too large #samples")
 			return
 		}
 

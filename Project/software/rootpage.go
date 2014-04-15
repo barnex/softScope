@@ -122,18 +122,18 @@ package softscope
 //// updates the DOM with new values received from server.
 //function onReqReady(req){
 //	if (req.readyState == 4) { // DONE
-//		if (req.status == 200) {	
-//			var resp = JSON.parse(req.responseText);	
+//		if (req.status == 200) {
+//			var resp = JSON.parse(req.responseText);
 //			for(var i=0; i<resp.length; i++){
 //				var r = resp[i];
 //				var func = window[r.F];
 //				if (func == null) {
 //					showErr("undefined: " + r.F);
-//				}else{ 
+//				}else{
 //					func.apply(this, r.Args);
 //				}
 //			}
-//		} 
+//		}
 //	pending = false;
 //	}
 //}
@@ -144,7 +144,7 @@ package softscope
 //	}
 //	pending = true;
 //	var req = new XMLHttpRequest();
-//	req.open("GET", document.URL + "/rx", true); 
+//	req.open("GET", document.URL + "/rx", true);
 //	//req.timeout = 2*tick;
 //	req.onreadystatechange = function(){ onReqReady(req) };
 //	req.setRequestHeader("Content-type","application/x-www-form-urlencoded");
@@ -168,7 +168,7 @@ package softscope
 //</head>
 //
 //<body>
-//	
+//
 //<h1><i>Soft</i>Scope</h1>
 //
 //<span id="errorBox"> &nbsp; </span>
