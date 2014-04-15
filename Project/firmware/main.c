@@ -5,14 +5,13 @@
 
 #include "adc.h"
 #include "clock.h"
+#include "inbox.h"
 #include "leds.h"
 #include "outbox.h"
-#include "settings.h"
 #include "usart.h"
 #include "utils.h"
 
 volatile uint16_t *samplesBuffer;
-
 
 volatile int adcPos = 0;
 
@@ -25,14 +24,14 @@ void TIM3_IRQHook() {
 	}
 }
 
+
 void init() {
 	NVIC_PriorityGroupConfig( NVIC_PriorityGroup_4 );
+	init_LEDs();
 
 	// ADC
 	samplesBuffer   = emalloc(ADC_BUFSIZE*sizeof(samplesBuffer[0]));
 	memset((void*)samplesBuffer, 0, ADC_BUFSIZE*sizeof(samplesBuffer[0]));
-
-	init_LEDs();
 
 	init_clock(timebase, IR_PERIOD);
 	clock_TIM3_IRQHook = TIM3_IRQHook;  // Register TIM3_IRQHook to be called at the end of TIM3_IRQHandler

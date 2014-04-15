@@ -2,7 +2,7 @@
 #include <string.h>
 
 #include "outbox.h"
-#include "settings.h"
+#include "inbox.h"
 #include "usart.h"
 #include "utils.h"
 
