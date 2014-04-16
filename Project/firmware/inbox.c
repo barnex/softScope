@@ -1,8 +1,9 @@
-#include "inbox.h"
-
 #include "adc.h"
 #include "clock.h"
+#include "error.h"
+#include "inbox.h"
 #include "leds.h"
+#include "outbox.h"
 #include "usart.h"
 
 volatile uint32_t reqFrames  = 0;
@@ -10,8 +11,6 @@ volatile uint32_t reqFrames  = 0;
 volatile uint32_t samples    = 512;    // TODO(a): keep below MAX_NSAMPLES
 volatile uint32_t timebase   = 4200;
 volatile uint32_t trigLev    = (1<<10);
-
-
 
 static message_t incoming;
 static int rxByte = 0;
@@ -50,9 +49,16 @@ void setTimebase(uint32_t p) {
 
 static void handleIncoming() {
 	LEDOff(LED_ERR);
+
+	// check magic number and ignore (but signal) bad message
+	if(incoming.magic != MSG_MAGIC){
+		error(BAD_MAGIC, incoming.magic);
+		return;
+	}
+
 	switch(incoming.command) {
 	default:
-		LEDOn(LED_ERR);
+		error(BAD_COMMAND, incoming.command);
 		break;
 	case SAMPLES:
 		setSamples(incoming.value);

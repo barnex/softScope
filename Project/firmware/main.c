@@ -58,13 +58,16 @@ int main(void) {
 		while(reqFrames == 0){
 			// wait until frame is requested
 		}
-		reqFrames--;
+		reqFrames--; // TODO: is not atomic
 
+		// Make non-volatile copies of settings
+		header->samples = samples;
+		header->trigLev = triglev;
+		header->timeBase = timebase;
+
+		
 		memcpy((void*)(outData), (void*)samplesBuffer, MAX_NSAMPLES * sizeof(samplesBuffer[0]));
-		outHeader->magic = 0xFFFFFFFF;
-		outHeader->samples = samples;
-		outHeader->trigLev = triglev;
-		outHeader->timeBase = timebase;
+
 		outbox_TX(samples*sizeof(samplesBuffer[0]));
 	}
 }

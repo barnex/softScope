@@ -35,8 +35,8 @@ static void delay(int C) {
 void panic() {
 	for(;;) {
 		LEDOn(LED_ERR);
-		delay(200000);
+		delay(2000000);
 		LEDOff(LED_ERR);
-		delay(200000);
+		delay(2000000);
 	}
 }

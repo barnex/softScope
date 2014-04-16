@@ -3,19 +3,21 @@
 
 #include <stdint.h>
 
-// -- outbound communication
-#define HEADER_WORDS  8
+// size of header_t in words.
+#define HEADER_WORDS  16
 
 // Frame data header
 typedef struct {
 	uint32_t magic;                   // identifies start of header, 0xFFFFFFFF
+	uint32_t errno;                   // code of last error, e.g.: BAD_COMMAND
+	uint32_t errval;                  // value that caused the error, e.g., the value of the bad command
 	uint32_t samples;                 // number of samples
 	uint32_t trigLev;
 	uint32_t timeBase;
-	uint32_t padding[HEADER_WORDS-4]; // unused space, needed for correct total size
+	uint32_t padding[HEADER_WORDS-6]; // unused space, needed for correct total size, should be HEADER_WORDS minus number of words in the struct!
 } header_t;
 
-header_t *outHeader;  // header written to software, first part of usartBuf
+header_t *header;     // header written to software, first part of usartBuf
 uint16_t *outData;    // data written to software, second part of usartBuf // TODO(a): bytes
 
 void init_outbox();

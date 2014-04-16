@@ -9,7 +9,7 @@
 #define MIN_NSAMPLES    (IR_PERIOD)
 
 
-#define MSG_MAGIC 0xFFFFFFFF
+#define MSG_MAGIC 0xFAFBFCFD
 
 // Incoming message
 typedef struct {
@@ -25,7 +25,7 @@ enum {
     SAMPLES   = 1,
     TIMEBASE  = 2,
     TRIGLEV   = 3,
-    REQ_FRAMES= 4
+    REQ_FRAMES= 1001,
 };
 
 

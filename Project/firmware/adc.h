@@ -1,6 +1,8 @@
 #ifndef _ADC_H_
 #define _ADC_H_
 
+#include <stdint.h>
+
 // Initialize the scope's analog input pin PA1
 void init_analogIn();
 

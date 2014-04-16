@@ -1,7 +1,18 @@
 package softscope
 
+// mirrors firmware/inbox.c
+
 import (
 	"io"
+)
+
+
+const (
+	INVALID    = 0
+	SAMPLES    = 1
+	TIMEBASE   = 2
+	TRIGLEV    = 3
+	REQ_FRAMES = 1001
 )
 
 type Message struct {
