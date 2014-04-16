@@ -15,6 +15,9 @@ const (
 	REQ_FRAMES = 1001
 )
 
+const MSG_MAGIC = 0xFAFBFCFD
+
+
 type Message struct {
 	Magic   uint32
 	Command uint32
@@ -38,4 +41,3 @@ func intBytes(i uint32) []byte {
 		byte((i & 0xFF000000) >> 24)}
 }
 
-const MSG_MAGIC = 0xFFFFFFFF

@@ -9,5 +9,5 @@ func init() {
 }
 
 func TestFrameReq(t *testing.T) {
-	SendMsg(5, 1)
+	SendMsg(REQ_FRAMES, 1) // request one frame
 }
