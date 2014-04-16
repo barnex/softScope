@@ -2,6 +2,7 @@ package softscope
 
 import (
 	"log"
+	"io"
 )
 
 var (
@@ -25,11 +26,17 @@ func SendMsg(command, value uint32) {
 	check(err)
 }
 
-func ReadHeader() Header {
+func ReadFrame() (*Header, []byte) {
 	var h Header
 	_, err := h.ReadFrom(tty)
 	check(err)
-	return h
+	if h.Magic != MSG_MAGIC{
+		return &h, nil // bad frame
+	}
+	payload := make([]byte, h.NBytes)
+	_, err = io.ReadFull(tty, payload)
+	check(err)
+	return &h, payload
 }
 
 func check(err error) {
