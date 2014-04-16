@@ -19,12 +19,12 @@ func TestFrameReq(t *testing.T) {
 	}
 }
 
-func TestClearErr(t*testing.T){
+func TestClearErr(t *testing.T) {
 	SendMsg(CLEAR_ERR, 0)
 	SendMsg(REQ_FRAMES, 1)
 	h, _ := ReadFrame()
 	checkHeader(t, h)
-	if h.Errno != 0 || h.Errval != 0{
+	if h.Errno != 0 || h.Errval != 0 {
 		t.Error("Error not cleared:", h.Errno, h.Errval)
 	}
 
@@ -32,15 +32,15 @@ func TestClearErr(t*testing.T){
 	SendMsg(REQ_FRAMES, 1)
 	h, _ = ReadFrame()
 	checkHeader(t, h)
-	if h.Errno != BAD_COMMAND || h.Errval != 666666{
-		t.Fail()
+	if h.Errno != BAD_COMMAND || h.Errval != 666666 {
+		t.Error("Expecting BAD_COMMAND, got:", h.Errno, h.Errval)
 	}
 
 	SendMsg(CLEAR_ERR, 0)
 	SendMsg(REQ_FRAMES, 1)
 	h, _ = ReadFrame()
 	checkHeader(t, h)
-	if h.Errno != 0 || h.Errval != 0{
+	if h.Errno != 0 || h.Errval != 0 {
 		t.Error("Error not cleared:", h.Errno, h.Errval)
 	}
 }

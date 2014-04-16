@@ -56,12 +56,19 @@ static void handleIncoming() {
 		break;
 	case SAMPLES:
 		setSamples(incoming.value);
+		break;
 	case TIMEBASE:
 		setTimebase(incoming.value);
+		break;
 	case TRIGLEV:
 		setTriglev(incoming.value);
+		break;
+	case CLEAR_ERR:
+		hdr->errno = 0;
+		hdr->errval = 0;
 	case REQ_FRAMES:
 		reqFrames = incoming.value;
+		break;
 	}
 }
 
