@@ -6,15 +6,9 @@
 #include "outbox.h"
 #include "usart.h"
 
-volatile uint32_t reqFrames  = 0;
-
-volatile uint32_t samples    = 512;    // TODO(a): keep below MAX_NSAMPLES
-volatile uint32_t timebase   = 4200;
-volatile uint32_t trigLev    = (1<<10);
 
 static message_t incoming;
 static int rxByte = 0;
-
 
 void setSamples(uint32_t s) {
 	if(s > MAX_NSAMPLES) {

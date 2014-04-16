@@ -25,7 +25,8 @@ enum {
     SAMPLES   = 1,
     TIMEBASE  = 2,
     TRIGLEV   = 3,
-    REQ_FRAMES= 1001,
+    CLEAR_ERR = 1000,  // Clear errno
+    REQ_FRAMES= 1001,  // Request a number of frames to be sent
 };
 
 

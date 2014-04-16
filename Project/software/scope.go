@@ -1,8 +1,8 @@
 package softscope
 
 import (
-	"log"
 	"io"
+	"log"
 )
 
 var (
@@ -30,7 +30,7 @@ func ReadFrame() (*Header, []byte) {
 	var h Header
 	_, err := h.ReadFrom(tty)
 	check(err)
-	if h.Magic != MSG_MAGIC{
+	if h.Magic != MSG_MAGIC {
 		return &h, nil // bad frame
 	}
 	payload := make([]byte, h.NBytes)
