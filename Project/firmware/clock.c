@@ -73,8 +73,6 @@ void init_clock(int clockPeriod, int irPeriod) {
 	TIM_SelectOutputTrigger(TIM4, TIM_TRGOSource_Update);     // TRGO on update
 }
 
-function clock_TIM3_IRQHook;
-
 void TIM3_IRQHandler(void) {
 	TIM_ClearITPendingBit(TIM3, TIM_IT_Update);
 	if (clock_TIM3_IRQHook != NULL) {

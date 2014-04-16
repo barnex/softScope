@@ -61,14 +61,16 @@ int main(void) {
 		reqFrames--; // TODO: is not atomic
 
 		// Make non-volatile copies of settings
-		header->samples = samples;
-		header->trigLev = triglev;
-		header->timeBase = timebase;
-
+		hdr->nsamples = samples;
+		hdr->bitdepth = 16; // TODO: variable
+		hdr->nchans = 1; // TODO: variable
+		hdr->nbytes = sizeof(uint16_t) * hdr->nchans * hdr->nsamples;
 		
-		memcpy((void*)(outData), (void*)samplesBuffer, MAX_NSAMPLES * sizeof(samplesBuffer[0]));
+		//hdr->trigLev = triglev;
+		//hdr->timeBase = timebase;
 
-		outbox_TX(samples*sizeof(samplesBuffer[0]));
+		memcpy((void*)(outData), (void*)samplesBuffer, hdr->nbytes);
+		outbox_TX(hdr->nbytes);
 	}
 }
 

@@ -18,7 +18,7 @@ type Header struct {
 	BitDepth uint32 // number of bits per sample
 	TrigLev  uint32
 	TimeBase uint32
-	padding  [HEADER_WORDS - 10]uint32 // unused space, needed for correct total size, should be HEADER_WORDS minus number of words in the struct!
+	padding  [HEADER_WORDS - 9]uint32 // unused space, needed for correct total size, should be HEADER_WORDS minus number of words in the struct!
 }
 
 func (h *Header) ReadFrom(r io.Reader) (n int64, err error) {

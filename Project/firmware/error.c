@@ -4,8 +4,8 @@
 
 void error(uint32_t code, uint32_t value){
 	LEDOn(LED_ERR);
-	header->errno = code;
-	header->errval = value;	
+	hdr->errno = code;
+	hdr->errval = value;	
 }
 
 

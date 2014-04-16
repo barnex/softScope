@@ -8,17 +8,19 @@ func init() {
 	Init("/dev/ttyUSB0", 115200)
 }
 
+// Request several frames and check that they start with correct magic,
+// which means the payload size (nbytes) is probably handled correctly
+// (otherwise we go out-of-phase).
 func TestFrameReq(t *testing.T) {
-	SendMsg(REQ_FRAMES, 1) // request one frame
-	h, _ := ReadFrame()
-	checkFrame(t, h)
-
-	SendMsg(REQ_FRAMES, 1)
-	h, _ = ReadFrame()
-	checkFrame(t, h)
+	for i:=0; i<10; i++{
+		SendMsg(REQ_FRAMES, 1) // request one frame
+		h, _ := ReadFrame()
+		checkHeader(t, h)
+	}
 }
 
-func checkFrame(t*testing.T, h*Header){
+// General header sanity check
+func checkHeader(t*testing.T, h*Header){
 	if h.Magic != MSG_MAGIC{
 		t.Error("bad header magic:", h.Magic)
 	}
