@@ -6,7 +6,6 @@ import (
 	"io"
 )
 
-
 const (
 	INVALID    = 0
 	SAMPLES    = 1
@@ -16,7 +15,6 @@ const (
 )
 
 const MSG_MAGIC = 0xFAFBFCFD
-
 
 type Message struct {
 	Magic   uint32
@@ -40,4 +38,3 @@ func intBytes(i uint32) []byte {
 		byte((i & 0x00FF0000) >> 16),
 		byte((i & 0xFF000000) >> 24)}
 }
-

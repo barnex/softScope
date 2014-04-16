@@ -1,9 +1,7 @@
 package softscope
 
 import (
-	"io"
 	"log"
-	"unsafe"
 )
 
 var (
@@ -28,10 +26,10 @@ func SendMsg(command, value uint32) {
 }
 
 func ReadHeader() Header {
-	var header Header
-	headerBytes := (*(*[1<<31 - 1]byte)(unsafe.Pointer(&header)))[:4*HEADER_WORDS]
-	io.ReadFull(tty, headerBytes)
-	return header
+	var h Header
+	_, err := h.ReadFrom(tty)
+	check(err)
+	return h
 }
 
 func check(err error) {

@@ -1,46 +1,24 @@
 package softscope
 
 import (
-//"fmt"
-//"log"
-//"strconv"
+	"io"
+	"unsafe"
 )
 
-const HEADER_WORDS = 8
+const HEADER_WORDS = 16
 
+// Frame data header
 type Header struct {
-	Magic    uint32
-	Samples  uint32
+	Magic    uint32 // identifies start of header, 0xFFFFFFFF
+	Errno    uint32 // code of last error, e.g.: BAD_COMMAND
+	Errval   uint32 // value that caused the error, e.g., the value of the bad command
+	Samples  uint32 // number of samples
 	TrigLev  uint32
 	TimeBase uint32
-	padding  [HEADER_WORDS - 4]uint32
+	padding  [HEADER_WORDS - 6]uint32 // unused space, needed for correct total size, should be HEADER_WORDS minus number of words in the struct!
 }
 
-//func NewHeader(m map[string]interface{}) Header {
-//	var s State
-//
-//	s.Samples = atoi(m["Samples"])
-//	s.TrigLev = atoi(m["TrigLev"])
-//	s.TimeBase = atoi(m["TimeBase"])
-//	s.SoftGain = atoi(m["SoftGain"])
-//
-//	return s
-//}
-
-//func (s *Header) WriteTo(w tty) {
-//	w.writeInt(s.Magic)
-//	w.writeInt(s.Samples)
-//	w.writeInt(s.TrigLev)
-//	w.writeInt(s.TimeBase)
-//	for i := 4; i < HEADER_WORDS; i++ {
-//		w.writeInt(0)
-//	}
-//}
-//
-//func atoi(a interface{}) uint32 {
-//	i, err := strconv.Atoi(fmt.Sprint(a))
-//	if err != nil {
-//		log.Println(err)
-//	}
-//	return uint32(i)
-//}
+func (h *Header) ReadFrom(r io.Reader) (n int64, err error) {
+	N, Err := io.ReadFull(r, (*(*[1<<31 - 1]byte)(unsafe.Pointer(h)))[:4*HEADER_WORDS])
+	return int64(N), Err
+}

@@ -2,6 +2,7 @@ package softscope
 
 import (
 	"testing"
+	"fmt"
 )
 
 func init() {
@@ -10,4 +11,6 @@ func init() {
 
 func TestFrameReq(t *testing.T) {
 	SendMsg(REQ_FRAMES, 1) // request one frame
+	h := ReadHeader()
+	fmt.Printf("%#v\n", h)
 }
