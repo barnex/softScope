@@ -29,6 +29,7 @@ void init() {
 	NVIC_PriorityGroupConfig( NVIC_PriorityGroup_4 );
 	init_LEDs();
 
+	// initial settings
 	timebase = 420;
 
 	// ADC

@@ -4,6 +4,10 @@
 #include "usart.h"  // for definition of "function"
 #include <string.h>
 
+enum{
+	MIN_CLOCK_PERIOD = 42
+};
+
 
 // Initialize the ADC/DAC clocks. They will sample every ADCPeriod cycles (42=1Msample/s).
 // Generate TIM3 interrupt every IRPeriod (then clock_TIM3_IRQHook will be called).

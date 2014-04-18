@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 #include "clock.h"
-#include "leds.h"
+#include "error.h"
 
 //static uint32_t currentClockPeriod, currentIrPeriod;
 
@@ -24,7 +24,12 @@ void init_clock(int clockPeriod, int irPeriod) {
 	//	return; // nothing has changed
 	//}
 
-	//disable_clock();
+	disable_clock();
+	
+	if(clockPeriod < MIN_CLOCK_PERIOD){
+		error(BAD_CLOCK_PERIOD, clockPeriod);
+		clockPeriod = MIN_CLOCK_PERIOD;
+	}
 
 	// TIM2 controls the ADC sample rate
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);      // Enable clock to peripheral, APB1 clock: 168MHz/4 = 42 MHz
