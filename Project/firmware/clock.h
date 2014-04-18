@@ -13,6 +13,6 @@ void init_clock(int ADCPeriod, int IRPeriod);
 void enable_clock();
 
 // Called at the end of TIM3_IRQHandler.
-function clock_TIM3_IRQHook;
+volatile function clock_TIM3_IRQHook;
 
 #endif

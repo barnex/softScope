@@ -29,6 +29,8 @@ void init() {
 	NVIC_PriorityGroupConfig( NVIC_PriorityGroup_4 );
 	init_LEDs();
 
+	timebase = 420;
+
 	// ADC
 	samplesBuffer   = emalloc(ADC_BUFSIZE*sizeof(samplesBuffer[0]));
 	memset((void*)samplesBuffer, 0, ADC_BUFSIZE*sizeof(samplesBuffer[0]));

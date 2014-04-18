@@ -2,8 +2,9 @@
 #include <stdlib.h>
 
 #include "clock.h"
+#include "leds.h"
 
-static uint32_t currentClockPeriod, currentIrPeriod;
+//static uint32_t currentClockPeriod, currentIrPeriod;
 
 void enable_clock() {
 	TIM_Cmd(TIM2, ENABLE);
@@ -19,11 +20,11 @@ void disable_clock() {
 
 void init_clock(int clockPeriod, int irPeriod) {
 
-	if(clockPeriod == currentClockPeriod && irPeriod == currentIrPeriod) {
-		return; // nothing has changed
-	}
+	//if(clockPeriod == currentClockPeriod && irPeriod == currentIrPeriod) {
+	//	return; // nothing has changed
+	//}
 
-	disable_clock();
+	//disable_clock();
 
 	// TIM2 controls the ADC sample rate
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);      // Enable clock to peripheral, APB1 clock: 168MHz/4 = 42 MHz
