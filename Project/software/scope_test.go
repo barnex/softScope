@@ -14,40 +14,40 @@ func init() {
 func TestFrameReq(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		SendMsg(REQ_FRAMES, 1) // request one frame
-		h, _ := ReadFrame()
-		checkHeader(t, h)
+		f := ReadFrame()
+		checkFrame(t, f)
 	}
 }
 
 func TestClearErr(t *testing.T) {
 	SendMsg(CLEAR_ERR, 0)
 	SendMsg(REQ_FRAMES, 1)
-	h, _ := ReadFrame()
-	checkHeader(t, h)
-	if h.Errno != 0 || h.Errval != 0 {
-		t.Error("Error not cleared:", h.Errno, h.Errval)
+	f := ReadFrame()
+	checkFrame(t, f)
+	if f.Errno != 0 || f.Errval != 0 {
+		t.Error("Error not cleared:", f.Errno, f.Errval)
 	}
 
 	SendMsg(666666, 666666) // send total crap
 	SendMsg(REQ_FRAMES, 1)
-	h, _ = ReadFrame()
-	checkHeader(t, h)
-	if h.Errno != BAD_COMMAND || h.Errval != 666666 {
-		t.Error("Expecting BAD_COMMAND, got:", h.Errno, h.Errval)
+	f = ReadFrame()
+	checkFrame(t, f)
+	if f.Errno != BAD_COMMAND || f.Errval != 666666 {
+		t.Error("Expecting BAD_COMMAND, got:", f.Errno, f.Errval)
 	}
 
 	SendMsg(CLEAR_ERR, 0)
 	SendMsg(REQ_FRAMES, 1)
-	h, _ = ReadFrame()
-	checkHeader(t, h)
-	if h.Errno != 0 || h.Errval != 0 {
-		t.Error("Error not cleared:", h.Errno, h.Errval)
+	f = ReadFrame()
+	checkFrame(t, f)
+	if f.Errno != 0 || f.Errval != 0 {
+		t.Error("Error not cleared:", f.Errno, f.Errval)
 	}
 }
 
 // General header sanity check
-func checkHeader(t *testing.T, h *Header) {
-	if h.Magic != MSG_MAGIC {
-		t.Error("bad header magic:", h.Magic)
+func checkFrame(t *testing.T, f *Frame) {
+	if f.Magic != MSG_MAGIC {
+		t.Error("bad header magic:", f.Magic)
 	}
 }

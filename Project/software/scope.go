@@ -7,6 +7,7 @@ import (
 
 var (
 	tty TTY
+	datastream chan *Frame
 )
 
 func Init(ttyDev string, baud int) {
@@ -18,6 +19,8 @@ func Init(ttyDev string, baud int) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	go StreamInput()
 }
 
 func SendMsg(command, value uint32) {
@@ -26,21 +29,34 @@ func SendMsg(command, value uint32) {
 	check(err)
 }
 
-func ReadFrame() (*Header, []byte) {
+func readFrame() *Frame {
 	var h Header
 	_, err := h.ReadFrom(tty)
 	check(err)
 	if h.Magic != MSG_MAGIC {
-		return &h, nil // bad frame
+		log.Println("received bad frame")
+		return &Frame{h, nil} // bad frame
 	}
 	payload := make([]byte, h.NBytes)
 	_, err = io.ReadFull(tty, payload)
 	check(err)
-	return &h, payload
+	return &Frame{h, payload}
 }
+
+func ReadFrame()*Frame{return <- datastream}
 
 func check(err error) {
 	if err != nil {
 		panic(err)
+	}
+}
+
+func StreamInput(){
+	datastream = make(chan *Frame) // TODO: decide on buffering
+	for{
+		select{
+		default: log.Println("dropping frame")
+		case datastream <- readFrame():
+		}
 	}
 }

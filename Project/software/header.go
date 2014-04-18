@@ -25,3 +25,8 @@ func (h *Header) ReadFrom(r io.Reader) (n int64, err error) {
 	N, Err := io.ReadFull(r, (*(*[1<<31 - 1]byte)(unsafe.Pointer(h)))[:4*HEADER_WORDS])
 	return int64(N), Err
 }
+
+type Frame struct{
+	Header
+	Data []byte
+}
