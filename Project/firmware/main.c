@@ -31,6 +31,7 @@ void init() {
 
 	// initial settings
 	timebase = 420;
+	samples = 512;
 
 	// ADC
 	samplesBuffer   = emalloc(ADC_BUFSIZE*sizeof(samplesBuffer[0]));

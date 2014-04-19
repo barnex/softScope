@@ -32,10 +32,9 @@ func Main() {
 	}
 	Init(flag.Arg(0), baud)
 
-	go ReadFrames()
-	go HandleFrames()
-
 	go HandleMessages()
+	go HandleFrames()
+	go ReadFrames()
 
 	SendMsg(REQ_FRAMES, N_FRAMES_AHEAD) // OK firmware, you can start sending some frames now
 
@@ -64,12 +63,6 @@ func ReadFrames() {
 	}
 }
 
-func HandleFrames() {
-	for {
-		f := <-dataStream
-		fmt.Println(f.Header)
-	}
-}
 
 func Init(ttyDev string, baud int) {
 	log.SetFlags(0)

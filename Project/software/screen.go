@@ -5,14 +5,34 @@ package softscope
 import (
 	"github.com/ajstarks/svgo"
 	"net/http"
+	"bytes"
+	"sync"
+	"fmt"
+	"io"
 )
 
-func screenHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "image/svg+xml")
-	w.Header().Set("Cache-control", "No-Cache")
+var(
+	buf1, buf2 bytes.Buffer
+	bufLock sync.Mutex
+)
 
+func HandleFrames() {
+	for {
+		f := <-dataStream
+		fmt.Println(f.Header)
+
+		buf1.Reset()
+		render(f, &buf1)
+
+		bufLock.Lock()
+		buf1, buf2 = buf2, buf1
+		bufLock.Unlock()
+	}
+}
+
+func render(f*Frame, w io.Writer){
 	var (
-		screenW, screenH = 512, 256
+		screenW, screenH = int(f.NSamples), 256
 		gridDiv          = 32
 	)
 
@@ -28,14 +48,24 @@ func screenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	canvas.Rect(0, 0, screenW, screenH, "stroke:black; fill:none; stroke-width:4")
 
-	//	// Data
-	//	x := make([]int, len(buffer))
-	//	y := make([]int, len(buffer))
-	//	for i := range buffer {
-	//		x[i] = i
-	//		y[i] = screenH - int(buffer[i]/16) // 14-bit to 8-bit
-	//	}
-	//	canvas.Polyline(x, y, "stroke:blue; fill:none; stroke-width:3")
+	// Data
+	buffer := f.Data
+	x := make([]int, len(buffer))
+	y := make([]int, len(buffer))
+	for i := range buffer {
+		x[i] = i
+		y[i] = screenH - int(buffer[i]/16) // 14-bit to 8-bit
+	}
+	canvas.Polyline(x, y, "stroke:blue; fill:none; stroke-width:3")
 
 	canvas.End()
+}
+
+func screenHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "image/svg+xml")
+	w.Header().Set("Cache-control", "No-Cache")
+
+	bufLock.Lock()
+	defer bufLock.Unlock()
+	buf2.WriteTo(w)
 }
