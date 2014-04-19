@@ -12,6 +12,7 @@ import (
 )
 
 var(
+	// TODO: under heavy load it sometimes renders an empty frame
 	buf1, buf2 bytes.Buffer
 	bufLock sync.Mutex
 )
@@ -49,7 +50,7 @@ func render(f*Frame, w io.Writer){
 	canvas.Rect(0, 0, screenW, screenH, "stroke:black; fill:none; stroke-width:4")
 
 	// Data
-	buffer := f.Data
+	buffer := f.Data16()
 	x := make([]int, len(buffer))
 	y := make([]int, len(buffer))
 	for i := range buffer {

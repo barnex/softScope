@@ -43,5 +43,9 @@ func (h *Header) ReadFrom(r io.Reader) (n int64, err error) {
 
 type Frame struct {
 	Header
-	Data []byte
+	data []byte
+}
+
+func(f*Frame)Data16()[]uint16{
+	return (*(*[1<<31 - 1]uint16)(unsafe.Pointer(&f.data[0])))[:len(f.data)/2]
 }
