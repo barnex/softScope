@@ -4,13 +4,23 @@ package softscope
 
 import (
 	"io"
+	"fmt"
 )
 
-func SendMsg(command, value uint32) {
-	msg := Message{MSG_MAGIC, command, value}
-	_, err := msg.WriteTo(tty)
-	check(err)
+func HandleMessages() {
+	for {
+		m := <-msgStream
+		fmt.Println("send:", m)
+		_, err := m.WriteTo(tty)
+		check(err)
+	}
 }
+
+func SendMsg(command, value uint32) {
+	msgStream <- Message{MSG_MAGIC, command, value}
+}
+
+func RequestFrame() { SendMsg(REQ_FRAMES, 1) }
 
 const (
 	INVALID    = 0
