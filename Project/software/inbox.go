@@ -3,8 +3,8 @@ package softscope
 // mirrors firmware/inbox.c
 
 import (
-	"io"
 	"fmt"
+	"io"
 )
 
 func HandleMessages() {
