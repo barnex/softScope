@@ -2,6 +2,7 @@ package softscope
 
 import (
 	"io"
+	"log"
 	"unsafe"
 )
 
@@ -21,12 +22,26 @@ type Header struct {
 	padding  [HEADER_WORDS - 9]uint32 // unused space, needed for correct total size, should be HEADER_WORDS minus number of words in the struct!
 }
 
+func readFrame() *Frame {
+	var h Header
+	_, err := h.ReadFrom(tty)
+	check(err)
+	if h.Magic != MSG_MAGIC {
+		log.Println("received bad frame")
+		return &Frame{h, nil} // bad frame
+	}
+	payload := make([]byte, h.NBytes)
+	_, err = io.ReadFull(tty, payload)
+	check(err)
+	return &Frame{h, payload}
+}
+
 func (h *Header) ReadFrom(r io.Reader) (n int64, err error) {
 	N, Err := io.ReadFull(r, (*(*[1<<31 - 1]byte)(unsafe.Pointer(h)))[:4*HEADER_WORDS])
 	return int64(N), Err
 }
 
-type Frame struct{
+type Frame struct {
 	Header
 	Data []byte
 }

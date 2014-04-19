@@ -6,6 +6,12 @@ import (
 	"io"
 )
 
+func SendMsg(command, value uint32) {
+	msg := Message{MSG_MAGIC, command, value}
+	_, err := msg.WriteTo(tty)
+	check(err)
+}
+
 const (
 	INVALID    = 0
 	SAMPLES    = 1
