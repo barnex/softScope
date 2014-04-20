@@ -70,8 +70,8 @@ int main(void) {
 		hdr->nchans = 1; // TODO: variable
 		hdr->nbytes = sizeof(uint16_t) * hdr->nchans * hdr->nsamples;
 		
-		//hdr->trigLev = triglev;
-		//hdr->timeBase = timebase;
+		hdr->trigLev = triglev;
+		hdr->timeBase = timebase;
 
 		memcpy((void*)(outData), (void*)samplesBuffer, hdr->nbytes);
 		outbox_TX(hdr->nbytes);

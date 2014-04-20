@@ -158,9 +158,9 @@ function upload(id){
 	</tr></table>
 </div>
 	<table>
-		<tr> <td><b>samples<b></td> <td>  <input type=range id="samples" min=32 max=4096 step=32 value=512 oninput="upload('samples');"></td></tr>
-		<tr> <td><b>timebase<b></td> <td> <input type=range id="timebase" min=30 max=42000 step=12 value=420 oninput="upload('timebase');"></td></tr>
-		<tr> <td><b>trigger<b></td> <td>  <input type=range id="triglev" min=0 max=4096 step=16 value=420 oninput="upload('triglev');"></td></tr>
+		<tr> <td><b>samples<b></td> <td>  <input type=range id="samples" min=32 max=4096 step=32 value=512   onchange="upload('samples') ;" oninput="upload('samples') ;"  ></td></tr>
+		<tr> <td><b>timebase<b></td> <td> <input type=range id="timebase" min=30 max=42000 step=12 value=420 onchange="upload('timebase');" oninput="upload('timebase');"  ></td></tr>
+		<tr> <td><b>trigger<b></td> <td>  <input type=range id="triglev" min=0 max=4096 step=16 value=420    onchange="upload('triglev') ;" oninput="upload('triglev') ;"  ></td></tr>
 	</table>
 <div>
 
