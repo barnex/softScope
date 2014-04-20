@@ -3,11 +3,9 @@ package softscope
 // Serves the scope's main page.
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 	"strings"
 	//"time"
 )
@@ -21,32 +19,19 @@ type jsCall struct {
 	Args []interface{} // function arguments
 }
 
-var nrx = 0
-
-func rxHandler(w http.ResponseWriter, r *http.Request) {
-	//time.Sleep(1*time.Second)
-	nrx++
-	calls := make([]jsCall, 0, 1)
-	calls = append(calls, jsCall{"setAttr", []interface{}{"NRX", "innerHTML", nrx}})
-	calls = append(calls, jsCall{"setAttr", []interface{}{"screen", "src", "/screen.svg"}})
-	//	if len(calls) != 0 {
-	//		fmt.Println("rx", calls) // debug
-	//	}
-	check(json.NewEncoder(w).Encode(calls))
-}
-
 const TX_MAGIC = 1234567
 
 func txHandler(w http.ResponseWriter, r *http.Request) {
 	url := r.URL.Path[(len("/tx/")):]
 	split := strings.SplitN(url, "/", 2)
 	cmd := split[0]
-	val, err := strconv.Atoi(split[1])
-	if err != nil {
-		log.Println(err)
-	}
+	val := atouint32(split[1])
 	fmt.Println("tx", cmd, val)
+	switch(cmd){
+		case "samples": SendMsg(SET_SAMPLES, val)
+	}
 }
+
 
 var binCmds = map[string]uint32{
 	"nop":      0,
@@ -160,25 +145,27 @@ function upload(id){
 
 <span id="errorBox"> &nbsp; </span>
 
+
+<div>
+	<table><tr>
+	<td> <img id="screen" height=265 src="/screen.svg" />  </td>
+	<td> <pre style="font-size:0.7em;" ><span id="FrameDebug"> Waiting for frame </span></pre> </td>
+	</tr></table>
+</div>
+	<table>
+		<tr> <td><b>samples<b></td> <td> <input type=range id="samples" min=32 max=4096 step=32 value=512 oninput="upload('samples');"></td></tr>
+	</table>
+<div>
+
+</div>
+
+
 <div style="padding-top:2em;">
 	<table>
 		<tr> <td><b> NRX      </b></td> <td> <span id="NRX">  </span>   </td></tr>
 	</table>
 </div>
 
-
-<div>
-	<img id="screen" src="/screen.svg" />
-</div>
-
-<div style="padding-top:2em;">
-	<table>
-		<tr> <td><b> Samples  </b></td> <td> <input id=Samples  type=number min=1 value=512           onchange="upload('Samples') ;"></td></tr>
-		<tr> <td><b> TrigLev  </b></td> <td> <input id=TrigLev  type=number min=0 value=2000 max=4096 onchange="upload('TrigLev') ;"></td></tr>
-		<tr> <td><b> TimeBase </b></td> <td> <input id=TimeBase type=number min=1 value=100           onchange="upload('TimeBase');"></td></tr>
-		<tr> <td><b> SoftGain </b></td> <td>-<input id=SoftGain type=number min=0 value=2             onchange="upload('SoftGain');"></td></tr>
-	</table>
-</div>
 
 </body>
 </html>

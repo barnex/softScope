@@ -22,9 +22,9 @@ typedef struct {
 // Value for message_t command
 enum {
 	INVALID   = 0,
-    SAMPLES   = 1,
-    TIMEBASE  = 2,
-    TRIGLEV   = 3,
+    SET_SAMPLES   = 1,
+    SET_TIMEBASE  = 2,
+    SET_TRIGLEV   = 3,
     CLEAR_ERR = 1000,  // Clear errno
     REQ_FRAMES= 1001,  // Request a number of frames to be sent
 };

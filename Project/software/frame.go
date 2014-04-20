@@ -1,6 +1,7 @@
 package softscope
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"unsafe"
@@ -46,6 +47,19 @@ type Frame struct {
 	data []byte
 }
 
-func(f*Frame)Data16()[]uint16{
+func (f *Frame) Data16() []uint16 {
 	return (*(*[1<<31 - 1]uint16)(unsafe.Pointer(&f.data[0])))[:len(f.data)/2]
+}
+
+func (h *Header) String() string {
+	return fmt.Sprint(
+		"Magic:", h.Magic, "\n",
+		"Errno:", h.Errno, "\n",
+		"Errval:", h.Errval, "\n",
+		"NBytes:", h.NBytes, "\n",
+		"NChans:", h.NChans, "\n",
+		"NSamples:", h.NSamples, "\n",
+		"BitDepth:", h.BitDepth, "\n",
+		"TrigLev:", h.TrigLev, "\n",
+		"TimeBase:", h.TimeBase)
 }

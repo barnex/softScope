@@ -3,35 +3,52 @@ package softscope
 // Serves SVG image of scope screen
 
 import (
-	"github.com/ajstarks/svgo"
-	"net/http"
 	"bytes"
-	"sync"
+	"encoding/json"
 	"fmt"
+	"github.com/ajstarks/svgo"
 	"io"
+	"net/http"
 )
 
-var(
+var (
 	// TODO: under heavy load it sometimes renders an empty frame
 	buf1, buf2 bytes.Buffer
-	bufLock sync.Mutex
+	currentHdr Header
+	//bufLock    sync.Mutex
 )
 
 func HandleFrames() {
 	for {
 		f := <-dataStream
-		fmt.Println(f.Header)
 
 		buf1.Reset()
 		render(f, &buf1)
 
-		bufLock.Lock()
+		//bufLock.Lock()
+		currentHdr = f.Header
 		buf1, buf2 = buf2, buf1
-		bufLock.Unlock()
+		//bufLock.Unlock()
 	}
 }
 
-func render(f*Frame, w io.Writer){
+var nrx = 0
+
+func rxHandler(w http.ResponseWriter, r *http.Request) {
+	//time.Sleep(1*time.Second)
+	nrx++
+	calls := make([]jsCall, 0, 3)
+	calls = append(calls, jsCall{"setAttr", []interface{}{"NRX", "innerHTML", nrx}})
+
+	//bufLock.Lock()
+	calls = append(calls, jsCall{"setAttr", []interface{}{"FrameDebug", "innerHTML", fmt.Sprint(&currentHdr)}})
+	calls = append(calls, jsCall{"setAttr", []interface{}{"screen", "src", "/screen.svg"}})
+	//bufLock.Unlock()
+
+	check(json.NewEncoder(w).Encode(calls))
+}
+
+func render(f *Frame, w io.Writer) {
 	var (
 		screenW, screenH = int(f.NSamples), 256
 		gridDiv          = 32
@@ -66,7 +83,7 @@ func screenHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "image/svg+xml")
 	w.Header().Set("Cache-control", "No-Cache")
 
-	bufLock.Lock()
-	defer bufLock.Unlock()
+	//bufLock.Lock()
+	//defer bufLock.Unlock()
 	buf2.WriteTo(w)
 }

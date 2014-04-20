@@ -23,12 +23,12 @@ func SendMsg(command, value uint32) {
 func RequestFrame() { SendMsg(REQ_FRAMES, 1) }
 
 const (
-	INVALID    = 0
-	SAMPLES    = 1
-	TIMEBASE   = 2
-	TRIGLEV    = 3
-	CLEAR_ERR  = 1000 // Clear errno
-	REQ_FRAMES = 1001 // Request a number of frames to be sent
+	INVALID      = 0
+	SET_SAMPLES  = 1
+	SET_TIMEBASE = 2
+	SET_TRIGLEV  = 3
+	CLEAR_ERR    = 1000 // Clear errno
+	REQ_FRAMES   = 1001 // Request a number of frames to be sent
 )
 
 const MSG_MAGIC = 0xFAFBFCFD

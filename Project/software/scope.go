@@ -63,7 +63,6 @@ func ReadFrames() {
 	}
 }
 
-
 func Init(ttyDev string, baud int) {
 	log.SetFlags(0)
 	log.Println("Using", ttyDev, "@", baud, "baud")
