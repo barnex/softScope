@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 	"strconv"
 )
 
@@ -12,6 +13,7 @@ var (
 	tty        TTY
 	dataStream = make(chan *Frame)
 	msgStream  = make(chan Message)
+	totalframes, frameRate int
 )
 
 const (
@@ -32,6 +34,7 @@ func Main() {
 	}
 	Init(flag.Arg(0), baud)
 
+	go countFrameRate()
 	go HandleMessages()
 	go HandleFrames()
 	go ReadFrames()
@@ -54,6 +57,7 @@ func Main() {
 func ReadFrames() {
 	for {
 		f := readFrame()
+		totalframes++
 		select {
 		default:
 			log.Println("dropping frame")
@@ -71,5 +75,13 @@ func Init(ttyDev string, baud int) {
 	tty, err = OpenTTY(ttyDev, baud)
 	if err != nil {
 		log.Fatal(err)
+	}
+}
+
+func countFrameRate(){
+	for{
+		n0 := totalframes
+		time.Sleep(1*time.Second)
+		frameRate = totalframes - n0
 	}
 }

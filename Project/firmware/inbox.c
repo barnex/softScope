@@ -54,13 +54,13 @@ static void handleIncoming() {
 	default:
 		error(BAD_COMMAND, incoming.command);
 		break;
-	case SAMPLES:
+	case SET_SAMPLES:
 		setSamples(incoming.value);
 		break;
-	case TIMEBASE:
+	case SET_TIMEBASE:
 		setTimebase(incoming.value);
 		break;
-	case TRIGLEV:
+	case SET_TRIGLEV:
 		setTriglev(incoming.value);
 		break;
 	case CLEAR_ERR:

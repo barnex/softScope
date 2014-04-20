@@ -169,7 +169,8 @@ function upload(id){
 
 <div style="padding-top:2em;">
 	<table>
-		<tr> <td><b> NRX      </b></td> <td> <span id="NRX">  </span>   </td></tr>
+		<tr> <td><b> Screen refreshes  </b></td> <td> <span id="NRX">  </span>   </td></tr>
+		<tr> <td><b> TTY Frames in     </b></td> <td> <span id="FrameRate">  </span> /s  </td></tr>
 	</table>
 </div>
 
