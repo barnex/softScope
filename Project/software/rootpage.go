@@ -4,7 +4,6 @@ package softscope
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
 	//"time"
@@ -27,27 +26,33 @@ func txHandler(w http.ResponseWriter, r *http.Request) {
 	cmd := split[0]
 	val := atouint32(split[1])
 	fmt.Println("tx", cmd, val)
-	switch(cmd){
-		case "samples": SendMsg(SET_SAMPLES, val)
+	switch cmd {
+	default:
+		panic(cmd)
+	case "samples":
+		SendMsg(SET_SAMPLES, val)
+	case "timebase":
+		SendMsg(SET_TIMEBASE, val)
+	case "triglev":
+		SendMsg(SET_TRIGLEV, val)
 	}
 }
 
+//var binCmds = map[string]uint32{
+//	"nop":      0,
+//	"samples":  1,
+//	"timebase": 2,
+//	"triglev":  3,
+//	"softgain": 4}
 
-var binCmds = map[string]uint32{
-	"nop":      0,
-	"samples":  1,
-	"timebase": 2,
-	"triglev":  3,
-	"softgain": 4}
-
-func binCommand(cmd string) uint32 {
-	if bin, ok := binCmds[strings.ToLower(cmd)]; ok {
-		return bin
-	} else {
-		log.Println("unknown command:", cmd)
-		return 0
-	}
-}
+//func binCommand(cmd string) uint32 {
+//	if bin, ok := binCmds[strings.ToLower(cmd)]; ok {
+//		return bin
+//	} else {
+//		log.Println("unknown command:", cmd)
+//		return 0
+//	}
+//}
 
 const page = `
 <!DOCTYPE html>
@@ -153,7 +158,9 @@ function upload(id){
 	</tr></table>
 </div>
 	<table>
-		<tr> <td><b>samples<b></td> <td> <input type=range id="samples" min=32 max=4096 step=32 value=512 oninput="upload('samples');"></td></tr>
+		<tr> <td><b>samples<b></td> <td>  <input type=range id="samples" min=32 max=4096 step=32 value=512 oninput="upload('samples');"></td></tr>
+		<tr> <td><b>timebase<b></td> <td> <input type=range id="timebase" min=30 max=42000 step=12 value=420 oninput="upload('timebase');"></td></tr>
+		<tr> <td><b>trigger<b></td> <td>  <input type=range id="triglev" min=0 max=4096 step=16 value=420 oninput="upload('triglev');"></td></tr>
 	</table>
 <div>
 

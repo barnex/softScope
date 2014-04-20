@@ -1,6 +1,6 @@
 package softscope
 
-import(
+import (
 	"strconv"
 )
 
@@ -10,10 +10,11 @@ func check(err error) {
 	}
 }
 
-
-func atouint32(a string)uint32{
+func atouint32(a string) uint32 {
 	i, err := strconv.Atoi(a)
 	check(err)
-	if i < 0 {panic("not an uint32")}
+	if i < 0 {
+		panic("not an uint32")
+	}
 	return uint32(i)
 }
