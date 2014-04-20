@@ -31,11 +31,8 @@ void setTriglev(uint32_t t) {
 }
 
 void setTimebase(uint32_t p) {
-	if(p < 42){
-		p = 42; // 1MHz
-	}
-	if(p>42000){
-		p = 42000;
+	if(p < MIN_CLOCK_PERIOD){
+		p = MIN_CLOCK_PERIOD;
 	}
 	init_clock(p, IR_PERIOD);
 	enable_clock();

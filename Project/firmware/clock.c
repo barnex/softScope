@@ -3,6 +3,7 @@
 
 #include "clock.h"
 #include "error.h"
+#include "inbox.h"
 
 //static uint32_t currentClockPeriod, currentIrPeriod;
 
@@ -30,6 +31,7 @@ void init_clock(int clockPeriod, int irPeriod) {
 		error(BAD_CLOCK_PERIOD, clockPeriod);
 		clockPeriod = MIN_CLOCK_PERIOD;
 	}
+	timebase = clockPeriod;
 
 	// TIM2 controls the ADC sample rate
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);      // Enable clock to peripheral, APB1 clock: 168MHz/4 = 42 MHz

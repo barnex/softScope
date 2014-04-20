@@ -8,6 +8,8 @@
 #define MAX_NSAMPLES    (ADC_BUFSIZE/2)
 #define MIN_NSAMPLES    (IR_PERIOD)
 
+#define MIN_CLOCK_PERIOD 30   // 1.4 MSample/s limit
+
 
 #define MSG_MAGIC 0xFAFBFCFD
 
