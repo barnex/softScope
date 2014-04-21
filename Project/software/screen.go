@@ -22,6 +22,8 @@ func HandleFrames() {
 	for {
 		f := <-dataStream
 
+		fmt.Println("handle", f.Header)
+
 		buf1.Reset()
 		render(f, &buf1)
 

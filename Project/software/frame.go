@@ -28,8 +28,8 @@ func readFrame() *Frame {
 	_, err := h.ReadFrom(tty)
 	check(err)
 	if h.Magic != MSG_MAGIC {
-		log.Println("received bad frame")
-		return &Frame{h, nil} // bad frame
+		log.Fatal("received bad frame", h) // TODO: handle and resync
+		return &Frame{h, nil}              // bad frame
 	}
 	payload := make([]byte, h.NBytes)
 	_, err = io.ReadFull(tty, payload)

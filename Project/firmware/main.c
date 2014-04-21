@@ -55,9 +55,6 @@ int main(void) {
 
 	for(;;) {
 
-		while(transmitting) {
-			// wait until previous transmission finished
-		}
 
 		while(reqFrames == 0){
 			// wait until frame is requested
@@ -72,6 +69,10 @@ int main(void) {
 		
 		hdr->trigLev = triglev;
 		hdr->timeBase = timebase;
+
+		while(transmitting) {
+			// wait until previous transmission finished
+		}
 
 		memcpy((void*)(outData), (void*)samplesBuffer, hdr->nbytes);
 		outbox_TX(hdr->nbytes);

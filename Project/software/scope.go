@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"time"
 	"strconv"
+	"time"
 )
 
 var (
-	tty        TTY
-	dataStream = make(chan *Frame)
-	msgStream  = make(chan Message)
+	tty                    TTY
+	dataStream             = make(chan *Frame)
+	msgStream              = make(chan Message)
 	totalframes, frameRate int
 )
 
@@ -25,8 +25,20 @@ const (
 	N_FRAMES_AHEAD = 3
 )
 
+var (
+	flag_CPUProf = flag.Bool("cpuprof", false, "CPU profiling")
+)
+
 func Main() {
 	flag.Parse()
+
+	if *flag_CPUProf {
+		InitCPUProf()
+		go func() {
+			time.Sleep(1 * time.Minute)
+			FlushProf()
+		}()
+	}
 
 	baud, err := strconv.Atoi(flag.Arg(1))
 	if err != nil {
@@ -34,7 +46,7 @@ func Main() {
 	}
 	Init(flag.Arg(0), baud)
 
-	go countFrameRate()
+	//go countFrameRate()
 	go HandleMessages()
 	go HandleFrames()
 	go ReadFrames()
@@ -57,7 +69,8 @@ func Main() {
 func ReadFrames() {
 	for {
 		f := readFrame()
-		totalframes++
+		fmt.Println(f.Header)
+		//totalframes++
 		select {
 		default:
 			log.Println("dropping frame")
@@ -78,10 +91,10 @@ func Init(ttyDev string, baud int) {
 	}
 }
 
-func countFrameRate(){
-	for{
-		n0 := totalframes
-		time.Sleep(1*time.Second)
-		frameRate = totalframes - n0
-	}
-}
+//func countFrameRate(){
+//	for{
+//		n0 := totalframes
+//		time.Sleep(1*time.Second)
+//		frameRate = totalframes - n0
+//	}
+//}
