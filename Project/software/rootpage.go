@@ -35,6 +35,8 @@ func txHandler(w http.ResponseWriter, r *http.Request) {
 		SendMsg(SET_TIMEBASE, val)
 	case "triglev":
 		SendMsg(SET_TRIGLEV, val)
+	case "reqFrames":
+		SendMsg(REQ_FRAMES, val)
 	}
 }
 
@@ -134,13 +136,17 @@ function val(id){
 	return elementById(id).value
 }
 
-function upload(id){
+function message(id, value){
 	var req = new XMLHttpRequest();
-	req.open("GET", document.URL + "tx/" + id + "/" + val(id), false);
+	req.open("GET", document.URL + "tx/" + id + "/" + value, false);
 	req.send("");
 }
 
-	</script>
+function upload(id){
+	message(id, val(id));
+}
+
+</script>
 
 </head>
 
@@ -163,6 +169,8 @@ function upload(id){
 		<tr> <td><b>trigger<b></td> <td>  <input type=range id="triglev"  min=0 max=5000 step=16  value=420   onchange="upload('triglev') ;" oninput="upload('triglev') ;"  ></td></tr>
 	</table>
 <div>
+
+<input type=button onclick="message('reqFrames', 1);" value="Req. Frame" /> 
 
 </div>
 

@@ -35,7 +35,7 @@ enum {
 // Number of requested frames. If != 0, send frame and decrement.
 volatile uint32_t reqFrames;
 
-volatile uint32_t samples ;
+volatile uint32_t nSamples ;
 volatile uint32_t timebase;
 volatile uint32_t triglev ;
 

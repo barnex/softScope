@@ -17,7 +17,7 @@ void setSamples(uint32_t s) {
 	if(s < MIN_NSAMPLES) {
 		s = MIN_NSAMPLES;
 	}
-	samples = s;
+	nSamples = s;
 }
 
 void setTriglev(uint32_t t) {

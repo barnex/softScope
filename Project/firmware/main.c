@@ -31,7 +31,7 @@ void init() {
 
 	// initial settings
 	timebase = 420;
-	samples = 512;
+	nSamples = 512;
 
 	// ADC
 	samplesBuffer   = emalloc(ADC_BUFSIZE*sizeof(samplesBuffer[0]));
@@ -62,7 +62,7 @@ int main(void) {
 		reqFrames--; // TODO: is not atomic
 
 		// Make non-volatile copies of settings
-		hdr->nsamples = samples;
+		hdr->nsamples = nSamples;
 		hdr->bitdepth = 16; // TODO: variable
 		hdr->nchans = 1; // TODO: variable
 		hdr->nbytes = sizeof(uint16_t) * hdr->nchans * hdr->nsamples;
