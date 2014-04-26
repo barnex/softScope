@@ -9,28 +9,28 @@ import (
 	"github.com/ajstarks/svgo"
 	"io"
 	"net/http"
+	"sync"
 )
 
 var (
-	// TODO: under heavy load it sometimes renders an empty frame
-	buf1, buf2 bytes.Buffer
+	buf1, buf2 = bytes.NewBuffer([]byte{}), bytes.NewBuffer([]byte{})
 	currentHdr Header
-	//bufLock    sync.Mutex
+	bufLock    sync.Mutex
 )
 
 func HandleFrames() {
 	for {
 		f := <-dataStream
 
-		fmt.Println("handle", f.Header)
+		fmt.Println("render", f.Header)
 
 		buf1.Reset()
-		render(f, &buf1)
+		render(f, buf1)
 
-		//bufLock.Lock()
+		bufLock.Lock()
 		currentHdr = f.Header
 		buf1, buf2 = buf2, buf1
-		//bufLock.Unlock()
+		bufLock.Unlock()
 	}
 }
 
@@ -86,7 +86,7 @@ func screenHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "image/svg+xml")
 	w.Header().Set("Cache-control", "No-Cache")
 
-	//bufLock.Lock()
-	//defer bufLock.Unlock()
-	buf2.WriteTo(w)
+	bufLock.Lock()
+	defer bufLock.Unlock()
+	w.Write(buf2.Bytes())
 }
