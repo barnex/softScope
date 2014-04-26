@@ -61,19 +61,17 @@ int main(void) {
 		}
 		reqFrames--; // TODO: is not atomic
 
-		// Make non-volatile copies of settings
-		hdr->nsamples = nSamples;
-		hdr->bitdepth = 16; // TODO: variable
-		hdr->nchans = 1; // TODO: variable
-		hdr->nbytes = sizeof(uint16_t) * hdr->nchans * hdr->nsamples;
-		
-		hdr->trigLev = triglev;
-		hdr->timeBase = timebase;
-
 		while(transmitting) {
 			// wait until previous transmission finished
 		}
 
+		// Make non-volatile copies of settings
+		hdr->nsamples = nSamples;
+		hdr->bitdepth = 16; // TODO: variable
+		hdr->nchans = 1;    // TODO: variable
+		hdr->nbytes = sizeof(uint16_t) * hdr->nchans * hdr->nsamples;
+		hdr->trigLev = triglev;
+		hdr->timeBase = timebase;
 		memcpy((void*)(outData), (void*)samplesBuffer, hdr->nbytes);
 		outbox_TX(hdr->nbytes);
 	}

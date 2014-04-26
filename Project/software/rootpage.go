@@ -170,8 +170,6 @@ function upload(id){
 	</table>
 <div>
 
-<input type=button onclick="message('reqFrames', 1);" value="Req. Frame" /> 
-
 </div>
 
 

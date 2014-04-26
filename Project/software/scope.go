@@ -14,7 +14,7 @@ var (
 	dataStream             = make(chan *Frame)
 	msgStream              = make(chan Message)
 	totalframes, frameRate int
-	freeRunning = false
+	freeRunning            = true // keep on requesting frames?
 )
 
 const (
@@ -77,7 +77,7 @@ func ReadFrames() {
 			log.Println("dropping frame")
 		case dataStream <- f:
 		}
-		if freeRunning{
+		if freeRunning {
 			SendMsg(REQ_FRAMES, N_FRAMES_AHEAD) // Make sure frames keep flowing
 		}
 	}
