@@ -14,42 +14,26 @@ import (
 
 var (
 	buf1, buf2 = bytes.NewBuffer([]byte{}), bytes.NewBuffer([]byte{})
-	currentHdr Header
 	bufLock    sync.Mutex
 )
 
-func HandleFrames() {
-	for {
-		f := <-dataStream
-
-		fmt.Println("render", f.Header)
-
-		buf1.Reset()
-		render(f, buf1)
-
-		bufLock.Lock()
-		currentHdr = f.Header
-		buf1, buf2 = buf2, buf1
-		bufLock.Unlock()
-	}
-}
+//func HandleFrames() {
+//	for {
+//		f := <-dataStream
+//
+//		fmt.Println("render", f.Header)
+//
+//		buf1.Reset()
+//		render(f, buf1)
+//
+//		bufLock.Lock()
+//		currentHdr = f.Header
+//		buf1, buf2 = buf2, buf1
+//		bufLock.Unlock()
+//	}
+//}
 
 var nrx = 0
-
-func rxHandler(w http.ResponseWriter, r *http.Request) {
-	//time.Sleep(1*time.Second)
-	nrx++
-	calls := make([]jsCall, 0, 3)
-	calls = append(calls, jsCall{"setAttr", []interface{}{"NRX", "innerHTML", nrx}})
-	//calls = append(calls, jsCall{"setAttr", []interface{}{"FrameRate", "innerHTML", frameRate}})
-
-	//bufLock.Lock()
-	calls = append(calls, jsCall{"setAttr", []interface{}{"FrameDebug", "innerHTML", fmt.Sprint(&currentHdr)}})
-	calls = append(calls, jsCall{"setAttr", []interface{}{"screen", "src", "/screen.svg"}})
-	//bufLock.Unlock()
-
-	check(json.NewEncoder(w).Encode(calls))
-}
 
 func render(f *Frame, w io.Writer) {
 	var (

@@ -18,7 +18,7 @@ type jsCall struct {
 	Args []interface{} // function arguments
 }
 
-const TX_MAGIC = 1234567
+//const TX_MAGIC = 1234567
 
 func txHandler(w http.ResponseWriter, r *http.Request) {
 	url := r.URL.Path[(len("/tx/")):]
@@ -39,22 +39,6 @@ func txHandler(w http.ResponseWriter, r *http.Request) {
 		SendMsg(REQ_FRAMES, val)
 	}
 }
-
-//var binCmds = map[string]uint32{
-//	"nop":      0,
-//	"samples":  1,
-//	"timebase": 2,
-//	"triglev":  3,
-//	"softgain": 4}
-
-//func binCommand(cmd string) uint32 {
-//	if bin, ok := binCmds[strings.ToLower(cmd)]; ok {
-//		return bin
-//	} else {
-//		log.Println("unknown command:", cmd)
-//		return 0
-//	}
-//}
 
 const page = `
 <!DOCTYPE html>

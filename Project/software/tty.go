@@ -15,8 +15,7 @@ import "C"
 
 type TTY int
 
-
-func InitTTY(ttyDev, baudrate string) TTY{
+func InitTTY(ttyDev, baudrate string) TTY {
 	baud, err := strconv.Atoi(baudrate)
 	if err != nil {
 		log.Fatal("invalid baud rate:", baudrate)
@@ -29,7 +28,6 @@ func InitTTY(ttyDev, baudrate string) TTY{
 	}
 	return tty
 }
-
 
 func OpenTTY(fname string, baud int) (TTY, error) {
 	fd := C.openTTY(C.CString(fname), C.int(baud))

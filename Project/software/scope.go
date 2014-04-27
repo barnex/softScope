@@ -10,14 +10,12 @@ import (
 
 var (
 	flag_CPUProf = flag.Bool("cpuprof", false, "CPU profiling")
-	flag_addr = flag.String("http", ":4000", "HTTP listen port")
+	flag_addr    = flag.String("http", ":4000", "HTTP listen port")
 )
 
 var (
-	//	tty                    TTY
-	dataStream = make(chan *Frame)
-	//	msgStream              = make(chan Message)
-	//	totalframes, frameRate int
+	_cmd        = make(chan func())
+	frame       = new(Frame)
 	freeRunning = true // keep on requesting frames?
 )
 
@@ -42,24 +40,32 @@ func Main() {
 	go StreamFrames(tty)
 	go StreamMessages(tty)
 
-	//go countFrameRate()
-	//	go HandleMessages()
-	//	go HandleFrames()
-	//	go ReadFrames()
-	//
-	//	SendMsg(REQ_FRAMES, N_FRAMES_AHEAD) // OK firmware, you can start sending some frames now
-	//
-
 	http.HandleFunc("/", rootHandler)
 	http.HandleFunc("/tx/", txHandler)
 	http.HandleFunc("/rx/", rxHandler)
 	http.HandleFunc("/screen.svg", screenHandler)
-
-
 	go RunHTTPServer(*flag_addr)
+
+	// main loop :-)
+	for {
+		f := <-_cmd
+		f()
+	}
 }
 
-func RunHTTPServer(addr string){
+func ExecSync(f func()) {
+	done := make(chan struct{})
+	_cmd <- func() {
+		f()
+		done <- struct{}{}
+	}
+}
+
+func ExecAsync(f func()) {
+	_cmd <- f
+}
+
+func RunHTTPServer(addr string) {
 	fmt.Println("listening on", addr)
 	err := http.ListenAndServe(addr, nil)
 	if err != nil {
@@ -67,28 +73,14 @@ func RunHTTPServer(addr string){
 	}
 }
 
-
-
 func StreamFrames(tty io.Reader) {
 	for {
 		f := readFrame(tty)
-		fmt.Println(f.Header)
-		//totalframes++
-		select {
-		default:
-			log.Println("dropping frame")
-		case dataStream <- f:
-		}
-		if freeRunning { // TODO: racy
-			SendMsg(REQ_FRAMES, N_FRAMES_AHEAD) // Make sure frames keep flowing
-		}
+		Exec(func() {
+			frame = f
+			if freeRunning {
+				SendMsg(REQ_FRAMES, N_FRAMES_AHEAD) // Make sure frames keep flowing
+			}
+		})
 	}
 }
-
-//func countFrameRate(){
-//	for{
-//		n0 := totalframes
-//		time.Sleep(1*time.Second)
-//		frameRate = totalframes - n0
-//	}
-//}
