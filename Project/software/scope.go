@@ -1,6 +1,7 @@
 package softscope
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"io"
@@ -14,9 +15,10 @@ var (
 )
 
 var (
-	_cmd        = make(chan func())
-	frame       = new(Frame)
-	freeRunning = true // keep on requesting frames?
+	_cmd                      = make(chan func())
+	frame                     = new(Frame)
+	screenBuf   *bytes.Buffer = bytes.NewBuffer([]byte{})
+	freeRunning               = true // keep on requesting frames?
 )
 
 const (
@@ -37,6 +39,8 @@ func Main() {
 
 	tty := InitTTY(flag.Arg(0), flag.Arg(1))
 
+	render(frame, screenBuf) // render initial empty frame
+
 	go StreamFrames(tty)
 	go StreamMessages(tty)
 
@@ -45,6 +49,8 @@ func Main() {
 	http.HandleFunc("/rx/", rxHandler)
 	http.HandleFunc("/screen.svg", screenHandler)
 	go RunHTTPServer(*flag_addr)
+
+	RequestFrame()
 
 	// main loop :-)
 	for {
@@ -59,6 +65,7 @@ func ExecSync(f func()) {
 		f()
 		done <- struct{}{}
 	}
+	<-done
 }
 
 func ExecAsync(f func()) {
@@ -76,11 +83,12 @@ func RunHTTPServer(addr string) {
 func StreamFrames(tty io.Reader) {
 	for {
 		f := readFrame(tty)
-		Exec(func() {
-			frame = f
+		ExecAsync(func() {
 			if freeRunning {
 				SendMsg(REQ_FRAMES, N_FRAMES_AHEAD) // Make sure frames keep flowing
 			}
+			frame = f
+			render(frame, screenBuf)
 		})
 	}
 }

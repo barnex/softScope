@@ -3,22 +3,35 @@ package softscope
 // Serves the scope's main page.
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
-	//"time"
 )
 
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, page)
 }
 
-type jsCall struct {
-	F    string        // function to call
-	Args []interface{} // function arguments
+func screenHandler(w http.ResponseWriter, r *http.Request) {
+	ExecSync(func() {
+		w.Header().Set("Content-Type", "image/svg+xml")
+		w.Header().Set("Cache-control", "No-Cache")
+		w.Write(screenBuf.Bytes())
+	})
 }
 
-//const TX_MAGIC = 1234567
+func rxHandler(w http.ResponseWriter, r *http.Request) {
+	ExecSync(func() {
+		nrx++
+		calls := make([]jsCall, 0, 3)
+		calls = append(calls, jsCall{"setAttr", []interface{}{"NRX", "innerHTML", nrx}})
+		calls = append(calls, jsCall{"setAttr", []interface{}{"FrameDebug", "innerHTML", fmt.Sprint(frame.Header.String())}})
+		calls = append(calls, jsCall{"setAttr", []interface{}{"screen", "src", "/screen.svg"}})
+		//calls = append(calls, jsCall{"setAttr", []interface{}{"FrameRate", "innerHTML", frameRate}})
+		check(json.NewEncoder(w).Encode(calls))
+	})
+}
 
 func txHandler(w http.ResponseWriter, r *http.Request) {
 	url := r.URL.Path[(len("/tx/")):]
@@ -38,6 +51,11 @@ func txHandler(w http.ResponseWriter, r *http.Request) {
 	case "reqFrames":
 		SendMsg(REQ_FRAMES, val)
 	}
+}
+
+type jsCall struct {
+	F    string        // function to call
+	Args []interface{} // function arguments
 }
 
 const page = `

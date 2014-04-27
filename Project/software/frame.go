@@ -48,6 +48,9 @@ type Frame struct {
 }
 
 func (f *Frame) Data16() []uint16 {
+	if len(f.data) == 0 {
+		return []uint16{}
+	}
 	return (*(*[1<<31 - 1]uint16)(unsafe.Pointer(&f.data[0])))[:len(f.data)/2]
 }
 

@@ -3,44 +3,19 @@ package softscope
 // Serves SVG image of scope screen
 
 import (
-	"bytes"
-	"encoding/json"
-	"fmt"
 	"github.com/ajstarks/svgo"
-	"io"
-	"net/http"
-	"sync"
+	"bytes"
 )
-
-var (
-	buf1, buf2 = bytes.NewBuffer([]byte{}), bytes.NewBuffer([]byte{})
-	bufLock    sync.Mutex
-)
-
-//func HandleFrames() {
-//	for {
-//		f := <-dataStream
-//
-//		fmt.Println("render", f.Header)
-//
-//		buf1.Reset()
-//		render(f, buf1)
-//
-//		bufLock.Lock()
-//		currentHdr = f.Header
-//		buf1, buf2 = buf2, buf1
-//		bufLock.Unlock()
-//	}
-//}
 
 var nrx = 0
 
-func render(f *Frame, w io.Writer) {
+func render(f *Frame, w *bytes.Buffer) {
 	var (
 		screenW, screenH = int(f.NSamples), 256
 		gridDiv          = 32
 	)
 
+	w.Reset()
 	canvas := svg.New(w)
 	canvas.Start(screenW, screenH)
 
@@ -55,22 +30,15 @@ func render(f *Frame, w io.Writer) {
 
 	// Data
 	buffer := f.Data16()
-	x := make([]int, len(buffer))
-	y := make([]int, len(buffer))
-	for i := range buffer {
-		x[i] = i
-		y[i] = screenH - int(buffer[i]/16) // 14-bit to 8-bit
+	if len(buffer) > 0 {
+		x := make([]int, len(buffer))
+		y := make([]int, len(buffer))
+		for i := range buffer {
+			x[i] = i
+			y[i] = screenH - int(buffer[i]/16) // 14-bit to 8-bit
+		}
+		canvas.Polyline(x, y, "stroke:blue; fill:none; stroke-width:3")
 	}
-	canvas.Polyline(x, y, "stroke:blue; fill:none; stroke-width:3")
 
 	canvas.End()
-}
-
-func screenHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "image/svg+xml")
-	w.Header().Set("Cache-control", "No-Cache")
-
-	bufLock.Lock()
-	defer bufLock.Unlock()
-	w.Write(buf2.Bytes())
 }
