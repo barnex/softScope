@@ -5,6 +5,7 @@ package softscope
 import (
 	"errors"
 	"log"
+	"strconv"
 	"unsafe"
 )
 
@@ -13,6 +14,22 @@ import (
 import "C"
 
 type TTY int
+
+
+func InitTTY(ttyDev, baudrate string) TTY{
+	baud, err := strconv.Atoi(baudrate)
+	if err != nil {
+		log.Fatal("invalid baud rate:", baudrate)
+	}
+	log.Println("Using", ttyDev, "@", baud, "baud")
+
+	tty, err2 := OpenTTY(ttyDev, baud)
+	if err2 != nil {
+		log.Fatal(err2)
+	}
+	return tty
+}
+
 
 func OpenTTY(fname string, baud int) (TTY, error) {
 	fd := C.openTTY(C.CString(fname), C.int(baud))

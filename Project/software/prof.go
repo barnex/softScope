@@ -6,7 +6,18 @@ import (
 	"os"
 	"os/exec"
 	"runtime/pprof"
+	"time"
 )
+
+func InitProfiler() {
+	if *flag_CPUProf {
+		InitCPUProf()
+		go func() {
+			time.Sleep(1 * time.Minute)
+			FlushProf()
+		}()
+	}
+}
 
 func InitCPUProf() {
 	// start CPU profile to file
@@ -26,20 +37,20 @@ func InitCPUProf() {
 	})
 }
 
-func InitMemProf() {
-	log.Println("memory profile enabled")
-	AtExit(func() {
-		fname := "softscope.pprof"
-		f, err := os.Create(fname)
-		defer f.Close()
-		check(err)
-		log.Println("writing memory profile to", fname)
-		check(pprof.WriteHeapProfile(f))
-		me := procSelfExe()
-		outfile := fname + ".svg"
-		saveCmdOutput(outfile, "go", "tool", "pprof", "-svg", "--inuse_objects", me, fname)
-	})
-}
+//func InitMemProf() {
+//	log.Println("memory profile enabled")
+//	AtExit(func() {
+//		fname := "softscope.pprof"
+//		f, err := os.Create(fname)
+//		defer f.Close()
+//		check(err)
+//		log.Println("writing memory profile to", fname)
+//		check(pprof.WriteHeapProfile(f))
+//		me := procSelfExe()
+//		outfile := fname + ".svg"
+//		saveCmdOutput(outfile, "go", "tool", "pprof", "-svg", "--inuse_objects", me, fname)
+//	})
+//}
 
 // Exec command and write output to outfile.
 func saveCmdOutput(outfile string, cmd string, args ...string) {

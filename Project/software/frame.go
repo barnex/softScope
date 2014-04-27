@@ -23,7 +23,7 @@ type Header struct {
 	padding  [HEADER_WORDS - 9]uint32 // unused space, needed for correct total size, should be HEADER_WORDS minus number of words in the struct!
 }
 
-func readFrame() *Frame {
+func readFrame(tty io.Reader) *Frame {
 	var h Header
 	_, err := h.ReadFrom(tty)
 	check(err)

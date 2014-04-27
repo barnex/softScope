@@ -7,17 +7,19 @@ import (
 	"io"
 )
 
-func HandleMessages() {
+var msgStream = make(chan Message)
+
+func SendMsg(command, value uint32) {
+	msgStream <- Message{MSG_MAGIC, command, value}
+}
+
+func StreamMessages(tty io.Writer) {
 	for {
 		m := <-msgStream
 		fmt.Println("send:", m)
 		_, err := m.WriteTo(tty)
 		check(err)
 	}
-}
-
-func SendMsg(command, value uint32) {
-	msgStream <- Message{MSG_MAGIC, command, value}
 }
 
 func RequestFrame() { SendMsg(REQ_FRAMES, 1) }

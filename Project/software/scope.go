@@ -3,18 +3,22 @@ package softscope
 import (
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
-	"strconv"
-	"time"
 )
 
 var (
-	tty                    TTY
-	dataStream             = make(chan *Frame)
-	msgStream              = make(chan Message)
-	totalframes, frameRate int
-	freeRunning            = true // keep on requesting frames?
+	flag_CPUProf = flag.Bool("cpuprof", false, "CPU profiling")
+	flag_addr = flag.String("http", ":4000", "HTTP listen port")
+)
+
+var (
+	//	tty                    TTY
+	dataStream = make(chan *Frame)
+	//	msgStream              = make(chan Message)
+	//	totalframes, frameRate int
+	freeRunning = true // keep on requesting frames?
 )
 
 const (
@@ -26,50 +30,48 @@ const (
 	N_FRAMES_AHEAD = 3
 )
 
-var (
-	flag_CPUProf = flag.Bool("cpuprof", false, "CPU profiling")
-)
-
 func Main() {
+	log.SetFlags(0)
+
 	flag.Parse()
 
-	if *flag_CPUProf {
-		InitCPUProf()
-		go func() {
-			time.Sleep(1 * time.Minute)
-			FlushProf()
-		}()
-	}
+	InitProfiler()
 
-	baud, err := strconv.Atoi(flag.Arg(1))
-	if err != nil {
-		log.Fatal("invalid baud rate:", flag.Arg(1))
-	}
-	Init(flag.Arg(0), baud)
+	tty := InitTTY(flag.Arg(0), flag.Arg(1))
+
+	go StreamFrames(tty)
+	go StreamMessages(tty)
 
 	//go countFrameRate()
-	go HandleMessages()
-	go HandleFrames()
-	go ReadFrames()
-
-	SendMsg(REQ_FRAMES, N_FRAMES_AHEAD) // OK firmware, you can start sending some frames now
+	//	go HandleMessages()
+	//	go HandleFrames()
+	//	go ReadFrames()
+	//
+	//	SendMsg(REQ_FRAMES, N_FRAMES_AHEAD) // OK firmware, you can start sending some frames now
+	//
 
 	http.HandleFunc("/", rootHandler)
 	http.HandleFunc("/tx/", txHandler)
 	http.HandleFunc("/rx/", rxHandler)
 	http.HandleFunc("/screen.svg", screenHandler)
 
-	addr := ":4000"
+
+	go RunHTTPServer(*flag_addr)
+}
+
+func RunHTTPServer(addr string){
 	fmt.Println("listening on", addr)
-	err = http.ListenAndServe(addr, nil)
+	err := http.ListenAndServe(addr, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
-func ReadFrames() {
+
+
+func StreamFrames(tty io.Reader) {
 	for {
-		f := readFrame()
+		f := readFrame(tty)
 		fmt.Println(f.Header)
 		//totalframes++
 		select {
@@ -77,20 +79,9 @@ func ReadFrames() {
 			log.Println("dropping frame")
 		case dataStream <- f:
 		}
-		if freeRunning {
+		if freeRunning { // TODO: racy
 			SendMsg(REQ_FRAMES, N_FRAMES_AHEAD) // Make sure frames keep flowing
 		}
-	}
-}
-
-func Init(ttyDev string, baud int) {
-	log.SetFlags(0)
-	log.Println("Using", ttyDev, "@", baud, "baud")
-
-	var err error
-	tty, err = OpenTTY(ttyDev, baud)
-	if err != nil {
-		log.Fatal(err)
 	}
 }
 

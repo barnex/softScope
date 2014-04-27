@@ -41,7 +41,7 @@ func rxHandler(w http.ResponseWriter, r *http.Request) {
 	nrx++
 	calls := make([]jsCall, 0, 3)
 	calls = append(calls, jsCall{"setAttr", []interface{}{"NRX", "innerHTML", nrx}})
-	calls = append(calls, jsCall{"setAttr", []interface{}{"FrameRate", "innerHTML", frameRate}})
+	//calls = append(calls, jsCall{"setAttr", []interface{}{"FrameRate", "innerHTML", frameRate}})
 
 	//bufLock.Lock()
 	calls = append(calls, jsCall{"setAttr", []interface{}{"FrameDebug", "innerHTML", fmt.Sprint(&currentHdr)}})
