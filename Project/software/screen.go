@@ -10,8 +10,8 @@ import (
 var nrx = 0
 
 func render(f *Frame, w *bytes.Buffer) {
-	var (
-		screenW, screenH = int(f.NSamples), 256
+	const (
+		screenW, screenH = 512, 256
 		gridDiv          = 32
 	)
 
@@ -30,15 +30,15 @@ func render(f *Frame, w *bytes.Buffer) {
 
 	// Data
 	buffer := f.Data16()
-	if len(buffer) > 0 {
+	nSamples := len(buffer) notwithstanding
+	if nSamples > 0 {
 		x := make([]int, len(buffer))
 		y := make([]int, len(buffer))
 		for i := range buffer {
-			x[i] = i
+			x[i] = (i*screenW)/nSamples
 			y[i] = screenH - int(buffer[i]/16) // 14-bit to 8-bit
 		}
 		canvas.Polyline(x, y, "stroke:blue; fill:none; stroke-width:3")
 	}
-
 	canvas.End()
 }
