@@ -19,6 +19,8 @@ void disable_clock() {
 	TIM_Cmd(TIM4, DISABLE);
 }
 
+volatile int       _adcPos;
+
 void init_clock(int clockPeriod, int irPeriod) {
 
 	//if(clockPeriod == currentClockPeriod && irPeriod == currentIrPeriod) {
@@ -26,6 +28,8 @@ void init_clock(int clockPeriod, int irPeriod) {
 	//}
 
 	disable_clock();
+
+	_adcPos = 0;
 	
 	if(clockPeriod < MIN_CLOCK_PERIOD){
 		error(BAD_CLOCK_PERIOD, clockPeriod);

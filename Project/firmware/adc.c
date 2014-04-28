@@ -13,6 +13,7 @@ void init_analogIn() {
 	GPIO_Init(GPIOA, &gpio);
 }
 
+
 void init_ADC(volatile uint16_t *samplesBuffer, int samples) {
 
 	// Init the DMA for transferring data from the ADC

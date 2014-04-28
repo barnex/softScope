@@ -18,32 +18,33 @@ volatile int       _adcPos        = 0;
 // Called at the end of TIM3_IRQHandler.
 void TIM3_IRQHook() {
 	_adcPos += IR_PERIOD;
-	if (_adcPos > ADC_BUFSIZE) {
+	if (_adcPos >= ADC_BUFSIZE) {
 		_adcPos = 0;
 		LEDToggle(LED_OK);
 	}
 }
 
+// return index for samplesBuffer where usable chunk starts (up to chunk + IR_PERIOD)
 int currentChunk(){
-	return 0;
-	//int c = _adcPos - (_adcPos % IR_PERIOD) - IR_PERIOD;
-	//if(c < 0){
-	//	c = ADC_BUFSIZE - IR_PERIOD;
-	//}
-	//return c;
+	int c = _adcPos - (_adcPos % IR_PERIOD) - IR_PERIOD;
+	if(c < 0){
+		c = ADC_BUFSIZE - IR_PERIOD;
+	}
+	return c;
 }
 
+// given an index in samplesbuffer, return index of next chunk (current + IR_PERIOD),
+// but wait until ADC is not writing there anymore.
 int nextChunk(int current){
-	return current + IR_PERIOD;
-	//int a = current + IR_PERIOD;
-	//if(a >= ADC_BUFSIZE){
-	//	a = 0;
-	//}
-	//int b = a + IR_PERIOD;
-	//while(_adcPos >= a && _adcPos < b){
-	//	//wait for ADC to exit upcoming chunk
-	//}
-	//return a;
+	int a = current + IR_PERIOD;
+	if(a >= ADC_BUFSIZE){
+		a = 0;
+	}
+	int b = a + IR_PERIOD;
+	while(_adcPos >= a && _adcPos < b){
+		//wait for ADC to exit upcoming chunk
+	}
+	return a;
 }
 
 void init() {
@@ -51,7 +52,7 @@ void init() {
 	init_LEDs();
 
 	// initial settings
-	timebase = 420;
+	timebase = 12000;
 	nSamples = 512;
 
 	// ADC
@@ -71,6 +72,8 @@ void init() {
 	enable_clock();
 }
 
+// check that ADC write position is not in [a, a+IR_PERIOD[,
+// which would be timing error if using that data.
 void checkTiming(int a){
 	if(_adcPos >= a && _adcPos < a + IR_PERIOD){
 		error(UNMET_TIMING, _adcPos-a); // value: by how much samples timing was missed
@@ -100,10 +103,12 @@ int main(void) {
 		hdr->trigLev = triglev;
 		hdr->timeBase = timebase;
 
+		// go through samplesbuffer in small chunks,
+		// trailing behind the ADC
 		int c = currentChunk();
 		for(int n = 0; n < hdr->nsamples; n+=IR_PERIOD){
 			checkTiming(c);
-			memcpy((void*)(&outData[c]), (void*)(&_samplesBuffer[c]), IR_PERIOD*sizeof(_samplesBuffer[0]));
+			memcpy((void*)(&outData[n]), (void*)(&_samplesBuffer[c]), IR_PERIOD*sizeof(_samplesBuffer[0]));
 			checkTiming(c);
 			c = nextChunk(c);
 		}
