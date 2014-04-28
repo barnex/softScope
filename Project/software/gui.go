@@ -57,6 +57,8 @@ func eventHandler(w http.ResponseWriter, r *http.Request) {
 		SendMsg(SET_TRIGLEV, val)
 	case "reqFrames":
 		SendMsg(REQ_FRAMES, val)
+	case "clearerr":
+		SendMsg(CLEAR_ERR, val)
 	}
 }
 
@@ -188,14 +190,16 @@ function upload(id){
 	<td> <pre style="font-size:0.7em;" ><span id="FrameDebug"> Waiting for frame </span></pre> </td>
 	</tr></table>
 </div>
+
+<div>
 	<table>
 		<tr> <td><b>samples<b></td> <td>  <input type=range id="samples"  min=0 max=4096 step=32 value=512   onchange="upload('samples') ;" oninput="upload('samples') ;"  ></td></tr>
 		<tr> <td><b>timebase<b></td> <td> <input type=range id="timebase" min=0 max=42000 step=6 value=420   onchange="upload('timebase');" oninput="upload('timebase');"  ></td></tr>
 		<tr> <td><b>trigger<b></td> <td>  <input type=range id="triglev"  min=0 max=5000 step=16  value=420   onchange="upload('triglev') ;" oninput="upload('triglev') ;"  ></td></tr>
 	</table>
-<div>
-
+	<input type=button value="Clear Err" onclick="message('clearerr', 0)"/>
 </div>
+
 
 
 <div style="padding-top:2em;">
