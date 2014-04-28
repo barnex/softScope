@@ -1,18 +1,34 @@
 package softscope
 
-// Serves the scope's main page.
+// Serves the scope's HTML GUI.
 
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 )
 
+// Start the GUI server on address (e.g. ":4000")
+func RunHTTPServer(addr string) {
+	http.HandleFunc("/", rootHandler)
+	http.HandleFunc("/screen.svg", screenHandler)
+	http.HandleFunc("/event/", eventHandler)
+	http.HandleFunc("/refresh/", refreshHandler)
+	fmt.Println("listening on", addr)
+	err := http.ListenAndServe(addr, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+// Serves the root page content (see const page)
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, page)
 }
 
+// Serves image of the screen
 func screenHandler(w http.ResponseWriter, r *http.Request) {
 	ExecSync(func() {
 		w.Header().Set("Content-Type", "image/svg+xml")
@@ -21,24 +37,15 @@ func screenHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func rxHandler(w http.ResponseWriter, r *http.Request) {
-	ExecSync(func() {
-		nrx++
-		calls := make([]jsCall, 0, 3)
-		calls = append(calls, jsCall{"setAttr", []interface{}{"NRX", "innerHTML", nrx}})
-		calls = append(calls, jsCall{"setAttr", []interface{}{"FrameDebug", "innerHTML", fmt.Sprint(frame.Header.String())}})
-		calls = append(calls, jsCall{"setAttr", []interface{}{"screen", "src", "/screen.svg"}})
-		//calls = append(calls, jsCall{"setAttr", []interface{}{"FrameRate", "innerHTML", frameRate}})
-		check(json.NewEncoder(w).Encode(calls))
-	})
-}
-
-func txHandler(w http.ResponseWriter, r *http.Request) {
-	url := r.URL.Path[(len("/tx/")):]
+// Called by javascript to notify us on events (clicks etc).  E.g.:
+// 	http://localhost/event/samples/128
+// is called set the number of samples to 128
+func eventHandler(w http.ResponseWriter, r *http.Request) {
+	url := r.URL.Path[(len("/event/")):]
 	split := strings.SplitN(url, "/", 2)
 	cmd := split[0]
 	val := atouint32(split[1])
-	fmt.Println("tx", cmd, val)
+	fmt.Println("event", cmd, val)
 	switch cmd {
 	default:
 		panic(cmd)
@@ -53,11 +60,27 @@ func txHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Called by javascript to refresh the page's dynamic content (settings readout etc.).
+// Answers with a JSON struct telling the page what to refresh.
+func refreshHandler(w http.ResponseWriter, r *http.Request) {
+	ExecSync(func() {
+		nrx++
+		calls := make([]jsCall, 0, 3)
+		calls = append(calls, jsCall{"setAttr", []interface{}{"NRX", "innerHTML", nrx}})
+		calls = append(calls, jsCall{"setAttr", []interface{}{"FrameDebug", "innerHTML", fmt.Sprint(frame.Header.String())}})
+		calls = append(calls, jsCall{"setAttr", []interface{}{"screen", "src", "/screen.svg"}})
+		//calls = append(calls, jsCall{"setAttr", []interface{}{"FrameRate", "innerHTML", frameRate}})
+		check(json.NewEncoder(w).Encode(calls))
+	})
+}
+
+// element in the JSON response by refreshHandler
 type jsCall struct {
 	F    string        // function to call
 	Args []interface{} // function arguments
 }
 
+// html served by rootHandler
 const page = `
 <!DOCTYPE html>
 <html>
@@ -125,7 +148,7 @@ function refresh(){
 	}
 	pending = true;
 	var req = new XMLHttpRequest();
-	req.open("GET", document.URL + "/rx", true);
+	req.open("GET", document.URL + "/refresh", true);
 	//req.timeout = 2*tick;
 	req.onreadystatechange = function(){ onReqReady(req) };
 	req.setRequestHeader("Content-type","application/x-www-form-urlencoded");
@@ -140,7 +163,7 @@ function val(id){
 
 function message(id, value){
 	var req = new XMLHttpRequest();
-	req.open("GET", document.URL + "tx/" + id + "/" + value, false);
+	req.open("GET", document.URL + "event/" + id + "/" + value, false);
 	req.send("");
 }
 

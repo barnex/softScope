@@ -3,21 +3,21 @@ package softscope
 import (
 	"bytes"
 	"flag"
-	"fmt"
 	"io"
 	"log"
-	"net/http"
 )
 
+// command-line flags
 var (
-	flag_CPUProf = flag.Bool("cpuprof", false, "CPU profiling")
 	flag_addr    = flag.String("http", ":4000", "HTTP listen port")
+	flag_CPUProf = flag.Bool("cpuprof", false, "CPU profiling")
 )
 
+// scope global variables
 var (
-	_cmd                      = make(chan func())
-	frame                     = new(Frame)
-	screenBuf   *bytes.Buffer = bytes.NewBuffer([]byte{})
+	_cmd                      = make(chan func()) // event handlers pipe instructions into main loop
+	frame                     = new(Frame) // currently displayed frame
+	screenBuf   *bytes.Buffer = bytes.NewBuffer([]byte{}) // svg rendering of current frame
 	freeRunning               = true // keep on requesting frames?
 )
 
@@ -28,6 +28,8 @@ const (
 	// If we would ask much more, the firmware would keep spitting frames longtime after the
 	// software has disconnected.
 	N_FRAMES_AHEAD = 3
+
+	DEFAULT_BAUDRATE = "115200"
 )
 
 func Main() {
@@ -37,28 +39,36 @@ func Main() {
 
 	InitProfiler()
 
-	tty := InitTTY(flag.Arg(0), flag.Arg(1))
+	baud := flag.Arg(1)
+	if baud == ""{
+		baud = DEFAULT_BAUDRATE
+	}
+	tty := InitTTY(flag.Arg(0), baud)
 
 	render(frame, screenBuf) // render initial empty frame
 
+	// these goroutines handle I/O and events,
+	// send instructions to main loop.
 	go StreamFrames(tty)
 	go StreamMessages(tty)
-
-	http.HandleFunc("/", rootHandler)
-	http.HandleFunc("/tx/", txHandler)
-	http.HandleFunc("/rx/", rxHandler)
-	http.HandleFunc("/screen.svg", screenHandler)
 	go RunHTTPServer(*flag_addr)
 
+	// set the ball rolling:
+	// next frame will be requested when this one enters,
+	// and so on...
 	RequestFrame()
 
-	// main loop :-)
+	// main loop:
+	// execute instructions sent by the other goroutines.
+	// by executing them all in one thread, we avoid race conditions
+	// and don't require any mutexes.
 	for {
 		f := <-_cmd
 		f()
 	}
 }
 
+// Send a function to be executed in the main loop and wait for it to finish.
 func ExecSync(f func()) {
 	done := make(chan struct{})
 	_cmd <- func() {
@@ -68,16 +78,9 @@ func ExecSync(f func()) {
 	<-done
 }
 
+// Send a function to be executed in the main loop and don't wait for it to finish
 func ExecAsync(f func()) {
 	_cmd <- f
-}
-
-func RunHTTPServer(addr string) {
-	fmt.Println("listening on", addr)
-	err := http.ListenAndServe(addr, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
 }
 
 func StreamFrames(tty io.Reader) {

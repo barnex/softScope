@@ -3,8 +3,8 @@ package softscope
 // Serves SVG image of scope screen
 
 import (
-	"github.com/ajstarks/svgo"
 	"bytes"
+	"github.com/ajstarks/svgo"
 )
 
 var nrx = 0
@@ -30,12 +30,12 @@ func render(f *Frame, w *bytes.Buffer) {
 
 	// Data
 	buffer := f.Data16()
-	nSamples := len(buffer) notwithstanding
+	nSamples := len(buffer)
 	if nSamples > 0 {
 		x := make([]int, len(buffer))
 		y := make([]int, len(buffer))
 		for i := range buffer {
-			x[i] = (i*screenW)/nSamples
+			x[i] = (i * screenW) / nSamples
 			y[i] = screenH - int(buffer[i]/16) // 14-bit to 8-bit
 		}
 		canvas.Polyline(x, y, "stroke:blue; fill:none; stroke-width:3")
