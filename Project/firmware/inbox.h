@@ -4,8 +4,8 @@
 #include <stdint.h>
 
 #define ADC_BUFSIZE	    2048
-#define IR_PERIOD       128
-#define MAX_NSAMPLES    (ADC_BUFSIZE/2)
+#define IR_PERIOD       32
+#define MAX_NSAMPLES    ADC_BUFSIZE
 #define MIN_NSAMPLES    (IR_PERIOD)
 
 #define MIN_CLOCK_PERIOD 30   // 1.4 MSample/s limit

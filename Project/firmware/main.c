@@ -5,25 +5,46 @@
 
 #include "adc.h"
 #include "clock.h"
+#include "error.h"
 #include "inbox.h"
 #include "leds.h"
 #include "outbox.h"
 #include "usart.h"
 #include "utils.h"
 
-volatile uint16_t *samplesBuffer;
-
-volatile int adcPos = 0;
+uint16_t volatile *_samplesBuffer = NULL;  // to be accessed via nextChunk
+volatile int       _adcPos        = 0;
 
 // Called at the end of TIM3_IRQHandler.
 void TIM3_IRQHook() {
-	adcPos += IR_PERIOD;
-	if (adcPos > ADC_BUFSIZE) {
-		adcPos = 0;
+	_adcPos += IR_PERIOD;
+	if (_adcPos > ADC_BUFSIZE) {
+		_adcPos = 0;
 		LEDToggle(LED_OK);
 	}
 }
 
+int currentChunk(){
+	return 0;
+	//int c = _adcPos - (_adcPos % IR_PERIOD) - IR_PERIOD;
+	//if(c < 0){
+	//	c = ADC_BUFSIZE - IR_PERIOD;
+	//}
+	//return c;
+}
+
+int nextChunk(int current){
+	return current + IR_PERIOD;
+	//int a = current + IR_PERIOD;
+	//if(a >= ADC_BUFSIZE){
+	//	a = 0;
+	//}
+	//int b = a + IR_PERIOD;
+	//while(_adcPos >= a && _adcPos < b){
+	//	//wait for ADC to exit upcoming chunk
+	//}
+	//return a;
+}
 
 void init() {
 	NVIC_PriorityGroupConfig( NVIC_PriorityGroup_4 );
@@ -34,20 +55,26 @@ void init() {
 	nSamples = 512;
 
 	// ADC
-	samplesBuffer   = emalloc(ADC_BUFSIZE*sizeof(samplesBuffer[0]));
-	memset((void*)samplesBuffer, 0, ADC_BUFSIZE*sizeof(samplesBuffer[0]));
+	_samplesBuffer   = emalloc(ADC_BUFSIZE*sizeof(_samplesBuffer[0]));
+	memset((void*)_samplesBuffer, 0, ADC_BUFSIZE*sizeof(_samplesBuffer[0]));
 
 	init_clock(timebase, IR_PERIOD);
 	clock_TIM3_IRQHook = TIM3_IRQHook;  // Register TIM3_IRQHook to be called at the end of TIM3_IRQHandler
 
 	init_analogIn();
-	init_ADC(samplesBuffer, ADC_BUFSIZE);
+	init_ADC(_samplesBuffer, ADC_BUFSIZE);
 
 	init_USART1(115200);
 	init_outbox();
 	init_inbox();
 
 	enable_clock();
+}
+
+void checkTiming(int a){
+	if(_adcPos >= a && _adcPos < a + IR_PERIOD){
+		error(UNMET_TIMING, _adcPos-a); // value: by how much samples timing was missed
+	}
 }
 
 int main(void) {
@@ -72,7 +99,15 @@ int main(void) {
 		hdr->nbytes = sizeof(uint16_t) * hdr->nchans * hdr->nsamples;
 		hdr->trigLev = triglev;
 		hdr->timeBase = timebase;
-		memcpy((void*)(outData), (void*)samplesBuffer, hdr->nbytes);
+
+		int c = currentChunk();
+		for(int n = 0; n < hdr->nsamples; n+=IR_PERIOD){
+			checkTiming(c);
+			memcpy((void*)(&outData[c]), (void*)(&_samplesBuffer[c]), IR_PERIOD*sizeof(_samplesBuffer[0]));
+			checkTiming(c);
+			c = nextChunk(c);
+		}
+
 		outbox_TX(hdr->nbytes);
 	}
 }

@@ -7,7 +7,8 @@ enum ErrorCode{
 	NO_ERROR         = 0,
 	BAD_MAGIC        = 1,
 	BAD_COMMAND      = 2,
-	BAD_CLOCK_PERIOD = 3
+	BAD_CLOCK_PERIOD = 3,
+	UNMET_TIMING     = 100
 };
 
 void error(uint32_t code, uint32_t value);

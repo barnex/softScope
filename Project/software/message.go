@@ -23,6 +23,7 @@ func SendMessages(tty io.Writer) {
 
 func RequestFrame() { SendMsg(REQ_FRAMES, 1) }
 
+// Commands for SendMsg
 const (
 	INVALID      = 0
 	SET_SAMPLES  = 1
