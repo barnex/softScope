@@ -1,5 +1,7 @@
 package softscope
 
+// Receive data frames over USART
+
 import (
 	"fmt"
 	"io"
@@ -7,7 +9,11 @@ import (
 	"unsafe"
 )
 
-const HEADER_WORDS = 16
+// Frame data structure holds a waveform
+type Frame struct {
+	Header
+	data []byte
+}
 
 // Frame data header
 type Header struct {
@@ -21,6 +27,22 @@ type Header struct {
 	TrigLev  uint32
 	TimeBase uint32
 	padding  [HEADER_WORDS - 9]uint32 // unused space, needed for correct total size, should be HEADER_WORDS minus number of words in the struct!
+}
+
+const HEADER_WORDS = 16
+
+// Infinitely read frames from tty device and handle them
+func ReceiveFrames(tty io.Reader) {
+	for {
+		f := readFrame(tty)
+		ExecAsync(func() {
+			if freeRunning {
+				SendMsg(REQ_FRAMES, N_FRAMES_AHEAD) // Make sure frames keep flowing
+			}
+			frame = f
+			render(frame, screenBuf)
+		})
+	}
 }
 
 func readFrame(tty io.Reader) *Frame {
@@ -40,11 +62,6 @@ func readFrame(tty io.Reader) *Frame {
 func (h *Header) ReadFrom(r io.Reader) (n int64, err error) {
 	N, Err := io.ReadFull(r, (*(*[1<<31 - 1]byte)(unsafe.Pointer(h)))[:4*HEADER_WORDS])
 	return int64(N), Err
-}
-
-type Frame struct {
-	Header
-	data []byte
 }
 
 func (f *Frame) Data16() []uint16 {

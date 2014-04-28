@@ -1,9 +1,8 @@
 package softscope
 
-// mirrors firmware/inbox.c
+// Communication with the STM32 over USART.
 
 import (
-	"fmt"
 	"io"
 )
 
@@ -13,10 +12,10 @@ func SendMsg(command, value uint32) {
 	msgStream <- Message{MSG_MAGIC, command, value}
 }
 
-func StreamMessages(tty io.Writer) {
+func SendMessages(tty io.Writer) {
 	for {
 		m := <-msgStream
-		fmt.Println("send:", m)
+		debug("send:", m)
 		_, err := m.WriteTo(tty)
 		check(err)
 	}

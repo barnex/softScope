@@ -2,7 +2,14 @@ package softscope
 
 import (
 	"strconv"
+	"log"
 )
+
+func debug(msg...interface{}){
+	if *flag_debug{
+		log.Println(msg...)
+	}
+}
 
 func check(err error) {
 	if err != nil {

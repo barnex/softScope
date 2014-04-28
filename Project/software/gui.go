@@ -45,7 +45,7 @@ func eventHandler(w http.ResponseWriter, r *http.Request) {
 	split := strings.SplitN(url, "/", 2)
 	cmd := split[0]
 	val := atouint32(split[1])
-	fmt.Println("event", cmd, val)
+	debug("event", cmd, val)
 	switch cmd {
 	default:
 		panic(cmd)

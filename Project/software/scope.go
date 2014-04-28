@@ -3,13 +3,13 @@ package softscope
 import (
 	"bytes"
 	"flag"
-	"io"
 	"log"
 )
 
 // command-line flags
 var (
 	flag_addr    = flag.String("http", ":4000", "HTTP listen port")
+	flag_debug   = flag.Bool("g", false, "debug")
 	flag_CPUProf = flag.Bool("cpuprof", false, "CPU profiling")
 )
 
@@ -49,8 +49,8 @@ func Main() {
 
 	// these goroutines handle I/O and events,
 	// send instructions to main loop.
-	go StreamFrames(tty)
-	go StreamMessages(tty)
+	go ReceiveFrames(tty)
+	go SendMessages(tty)
 	go RunHTTPServer(*flag_addr)
 
 	// set the ball rolling:
@@ -83,15 +83,3 @@ func ExecAsync(f func()) {
 	_cmd <- f
 }
 
-func StreamFrames(tty io.Reader) {
-	for {
-		f := readFrame(tty)
-		ExecAsync(func() {
-			if freeRunning {
-				SendMsg(REQ_FRAMES, N_FRAMES_AHEAD) // Make sure frames keep flowing
-			}
-			frame = f
-			render(frame, screenBuf)
-		})
-	}
-}
