@@ -34,7 +34,7 @@ void setTimebase(uint32_t p) {
 	if(p < MIN_CLOCK_PERIOD){
 		p = MIN_CLOCK_PERIOD;
 	}
-	init_clock(p, IR_PERIOD);
+	init_clock(p, ADC_CHUNKSIZE);
 	enable_clock();
 }
 

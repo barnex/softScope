@@ -12,43 +12,55 @@
 #include "usart.h"
 #include "utils.h"
 
+// ADC data buffer _____________________________________________________________________________________
 
-uint16_t volatile *_samplesBuffer = NULL;  // to be accessed via nextChunk
-volatile int       _adcPos        = 0;
+uint16_t volatile *adcBuf = NULL;     // ADC data buffer, to be accessed via startChunk, nextChunk.
+volatile int       adcPos        = 0; // ADC chunk number currently being written.
 
 // Called at the end of TIM3_IRQHandler.
 void TIM3_IRQHook() {
-	_adcPos += IR_PERIOD;
-	if (_adcPos >= ADC_BUFSIZE) {
-		_adcPos = 0;
+	adcPos += ADC_CHUNKSIZE;
+	if (adcPos >= ADC_BUFSIZE) {
+		adcPos = 0;
 		LEDToggle(LED_OK);
 	}
 }
 
-// return index for samplesBuffer where usable chunk starts (up to chunk + IR_PERIOD)
-uint16_t volatile *currentChunk(){
-	int c = _adcPos - (_adcPos % IR_PERIOD) - IR_PERIOD;
-	if(c < 0){
-		c = ADC_BUFSIZE - IR_PERIOD;
+// Return pointer to usable adc data chunk, length ADC_CHUNKSIZE
+// Pointer will be in chunk right behind ADC position.
+uint16_t volatile *startChunk() {
+	int c = adcPos - (adcPos % ADC_CHUNKSIZE) - ADC_CHUNKSIZE;
+	if(c < 0) {
+		c = ADC_BUFSIZE - ADC_CHUNKSIZE;
 	}
-	return &_samplesBuffer[c];
+	return &adcBuf[c];
 }
 
-// given an index in samplesbuffer, return index of next chunk (current + IR_PERIOD),
-// but wait until ADC is not writing there anymore.
-uint16_t volatile* nextChunk(uint16_t volatile* current){
-	uint16_t volatile* a = &current[IR_PERIOD];
-	if(a >= &_samplesBuffer[ADC_BUFSIZE]){
-		a = &_samplesBuffer[0];
+// Return pointer to usable adc data chunk, length ADC_CHUNKSIZE,
+// given the pointer to the previous chunk. Waits until ADC has
+// advanced enough.
+uint16_t volatile* nextChunk(uint16_t volatile* current) {
+	uint16_t volatile* a = &current[ADC_CHUNKSIZE];
+	if(a >= &adcBuf[ADC_BUFSIZE]) {
+		a = &adcBuf[0];
 	}
-	uint16_t volatile* b = &a[IR_PERIOD];
-	while(&_samplesBuffer[_adcPos] >= a && &_samplesBuffer[_adcPos] < b){
+	uint16_t volatile* b = &a[ADC_CHUNKSIZE];
+	while(&adcBuf[adcPos] >= a && &adcBuf[adcPos] < b) {
 		//wait for ADC to exit upcoming chunk
 	}
 	return a;
 }
 
 
+// check that ADC write position is not in [a, a+ADC_CHUNKSIZE[,
+// which would be timing error if using that data.
+void checkTiming(uint16_t volatile *chunk) {
+	if(&adcBuf[adcPos] >= &chunk[0] && &adcBuf[adcPos] < &chunk[ADC_CHUNKSIZE]) {
+		error(UNMET_TIMING, 0); // value: by how much samples timing was missed
+	}
+}
+
+// init ________________________________________________________________________________________________
 
 void init() {
 	NVIC_PriorityGroupConfig( NVIC_PriorityGroup_4 );
@@ -59,14 +71,14 @@ void init() {
 	nSamples = 512;
 
 	// ADC
-	_samplesBuffer   = emalloc(ADC_BUFSIZE*sizeof(_samplesBuffer[0]));
-	memset((void*)_samplesBuffer, 0, ADC_BUFSIZE*sizeof(_samplesBuffer[0]));
+	adcBuf   = emalloc(ADC_BUFSIZE*sizeof(adcBuf[0]));
+	memset((void*)adcBuf, 0, ADC_BUFSIZE*sizeof(adcBuf[0]));
 
-	init_clock(timebase, IR_PERIOD);
+	init_clock(timebase, ADC_CHUNKSIZE);
 	clock_TIM3_IRQHook = TIM3_IRQHook;  // Register TIM3_IRQHook to be called at the end of TIM3_IRQHandler
 
 	init_analogIn();
-	init_ADC(_samplesBuffer, ADC_BUFSIZE);
+	init_ADC(adcBuf, ADC_BUFSIZE);
 
 	init_USART1(115200);
 	init_outbox();
@@ -75,13 +87,9 @@ void init() {
 	enable_clock();
 }
 
-// check that ADC write position is not in [a, a+IR_PERIOD[,
-// which would be timing error if using that data.
-void checkTiming(int a){
-	if(_adcPos >= a && _adcPos < a + IR_PERIOD){
-		error(UNMET_TIMING, _adcPos-a); // value: by how much samples timing was missed
-	}
-}
+// main ___________________________________________________________________________________________________
+
+
 
 int main(void) {
 	init();
@@ -89,7 +97,7 @@ int main(void) {
 	for(;;) {
 
 
-		while(reqFrames == 0){
+		while(reqFrames == 0) {
 			// wait until frame is requested
 		}
 		reqFrames--; // TODO: is not atomic
@@ -106,14 +114,30 @@ int main(void) {
 		hdr->trigLev = triglev;
 		hdr->timeBase = timebase;
 
-		// go through samplesbuffer in small chunks,
-		// trailing behind the ADC
-		uint16_t volatile* c = currentChunk();
-		for(int n = 0; n < hdr->nsamples; n+=IR_PERIOD){
-			//checkTiming(c);
-			memcpy((void*)(&outData[n]), (void*)(c), IR_PERIOD*sizeof(_samplesBuffer[0]));
-			//checkTiming(c);
+		// trigger
+		uint16_t volatile* c = startChunk();
+		uint16_t last = c[0];
+
+		// for the moment only look in one chunk
+		int i = 0;  // i is trigger point
+		for(i=0; i<ADC_CHUNKSIZE; i++) {
+			uint16_t current = c[i];
+			if (last < triglev && current >= triglev) {
+				break;
+			}
+			last = current;
+		}
+
+
+		// copy partial chunk
+		int o = 0;  // output numbers copied
+		memcpy((void*)(&outData[o]), (void*)(&c[i]), (ADC_CHUNKSIZE-i)*sizeof(adcBuf[0]));
+		o += (ADC_CHUNKSIZE-i);
+
+		// copy the rest
+		for(; o < hdr->nsamples; o+=ADC_CHUNKSIZE) {
 			c = nextChunk(c);
+			memcpy((void*)(&outData[o]), (void*)(c), ADC_CHUNKSIZE*sizeof(adcBuf[0])); // may copy a bit too much
 		}
 
 		outbox_TX(hdr->nbytes);

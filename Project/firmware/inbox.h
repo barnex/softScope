@@ -3,13 +3,12 @@
 
 #include <stdint.h>
 
-#define ADC_BUFSIZE	    2048
-#define IR_PERIOD       32
-#define MAX_NSAMPLES    ADC_BUFSIZE
-#define MIN_NSAMPLES    (IR_PERIOD)
+#define ADC_CHUNKSIZE   512
+#define ADC_BUFSIZE	    (4 * ADC_CHUNKSIZE)
+#define MAX_NSAMPLES    4096                 // not really hard limit
+#define MIN_NSAMPLES    (ADC_CHUNKSIZE/4)    // not really hard limit
 
 #define MIN_CLOCK_PERIOD 30   // 1.4 MSample/s limit
-
 
 #define MSG_MAGIC 0xFAFBFCFD
 
