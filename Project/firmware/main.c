@@ -12,6 +12,7 @@
 #include "usart.h"
 #include "utils.h"
 
+
 uint16_t volatile *_samplesBuffer = NULL;  // to be accessed via nextChunk
 volatile int       _adcPos        = 0;
 
@@ -25,27 +26,29 @@ void TIM3_IRQHook() {
 }
 
 // return index for samplesBuffer where usable chunk starts (up to chunk + IR_PERIOD)
-int currentChunk(){
+uint16_t volatile *currentChunk(){
 	int c = _adcPos - (_adcPos % IR_PERIOD) - IR_PERIOD;
 	if(c < 0){
 		c = ADC_BUFSIZE - IR_PERIOD;
 	}
-	return c;
+	return &_samplesBuffer[c];
 }
 
 // given an index in samplesbuffer, return index of next chunk (current + IR_PERIOD),
 // but wait until ADC is not writing there anymore.
-int nextChunk(int current){
-	int a = current + IR_PERIOD;
-	if(a >= ADC_BUFSIZE){
-		a = 0;
+uint16_t volatile* nextChunk(uint16_t volatile* current){
+	uint16_t volatile* a = &current[IR_PERIOD];
+	if(a >= &_samplesBuffer[ADC_BUFSIZE]){
+		a = &_samplesBuffer[0];
 	}
-	int b = a + IR_PERIOD;
-	while(_adcPos >= a && _adcPos < b){
+	uint16_t volatile* b = &a[IR_PERIOD];
+	while(&_samplesBuffer[_adcPos] >= a && &_samplesBuffer[_adcPos] < b){
 		//wait for ADC to exit upcoming chunk
 	}
 	return a;
 }
+
+
 
 void init() {
 	NVIC_PriorityGroupConfig( NVIC_PriorityGroup_4 );
@@ -105,11 +108,11 @@ int main(void) {
 
 		// go through samplesbuffer in small chunks,
 		// trailing behind the ADC
-		int c = currentChunk();
+		uint16_t volatile* c = currentChunk();
 		for(int n = 0; n < hdr->nsamples; n+=IR_PERIOD){
-			checkTiming(c);
-			memcpy((void*)(&outData[n]), (void*)(&_samplesBuffer[c]), IR_PERIOD*sizeof(_samplesBuffer[0]));
-			checkTiming(c);
+			//checkTiming(c);
+			memcpy((void*)(&outData[n]), (void*)(c), IR_PERIOD*sizeof(_samplesBuffer[0]));
+			//checkTiming(c);
 			c = nextChunk(c);
 		}
 
