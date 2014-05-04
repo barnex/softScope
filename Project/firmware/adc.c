@@ -19,7 +19,7 @@ void init_analogIn() {
 #define ADC3_DR_ADDRESS 0x40012000 + 0x200 + ADC_DR
 
 
-void init_ADC(volatile uint16_t *samplesBuffer, int samples) {
+void init_ADC(uint16_t volatile *adc1buf, uint16_t volatile *adc2buf, int samples) {
 
 	// Init the DMA for transferring data from the ADC
 	// Enable the clock to the DMA
@@ -29,7 +29,7 @@ void init_ADC(volatile uint16_t *samplesBuffer, int samples) {
 	DMA_InitTypeDef DMAInit = {0, };
 	DMAInit.DMA_Channel            = DMA_Channel_0;                   // DMA channel 0 stream 0 is mapped to ADC1
 	DMAInit.DMA_PeripheralBaseAddr = ADC1_DR_ADDRESS;  
-	DMAInit.DMA_Memory0BaseAddr	   = (uint32_t) samplesBuffer;        // Copy data from the buffer
+	DMAInit.DMA_Memory0BaseAddr	   = (uint32_t)(adc1buf);  
 	DMAInit.DMA_DIR	               = DMA_DIR_PeripheralToMemory;
 	DMAInit.DMA_BufferSize         = samples;                         // 
 	DMAInit.DMA_PeripheralInc      = DMA_PeripheralInc_Disable;       // Do not increase the periph pointer
@@ -46,10 +46,11 @@ void init_ADC(volatile uint16_t *samplesBuffer, int samples) {
 	DMA_Init(DMA2_Stream0, &DMAInit);
 	DMA_Cmd(DMA2_Stream0 , ENABLE);
 
-
-
-
-	//DMA_ADC1 = DMA2_Stream0;
+	DMAInit.DMA_Channel            = DMA_Channel_0;                   // DMA channel 0 stream 1 is mapped to ADC2
+	DMAInit.DMA_PeripheralBaseAddr = ADC2_DR_ADDRESS;  
+	DMAInit.DMA_Memory0BaseAddr	   = (uint32_t)(adc2buf);   
+	DMA_Init(DMA2_Stream1, &DMAInit);
+	DMA_Cmd(DMA2_Stream1 , ENABLE);
 
 	//Enable the clock to the ADC
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE);
