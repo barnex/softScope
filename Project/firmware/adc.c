@@ -13,6 +13,11 @@ void init_analogIn() {
 	GPIO_Init(GPIOA, &gpio);
 }
 
+#define ADC_DR          0x4C                         // ADC data register offset, STM32 Guide section 13.13.14
+#define ADC1_DR_ADDRESS 0x40012000 + 0x000 + ADC_DR  // ADC1 data register, STM32 Guide section 2.3
+#define ADC2_DR_ADDRESS 0x40012000 + 0x100 + ADC_DR
+#define ADC3_DR_ADDRESS 0x40012000 + 0x200 + ADC_DR
+
 
 void init_ADC(volatile uint16_t *samplesBuffer, int samples) {
 
@@ -23,7 +28,7 @@ void init_ADC(volatile uint16_t *samplesBuffer, int samples) {
 	// Configure the DMA stream for ADC -> memory
 	DMA_InitTypeDef DMAInit = {0, };
 	DMAInit.DMA_Channel            = DMA_Channel_0;                   // DMA channel 0 stream 0 is mapped to ADC1
-	DMAInit.DMA_PeripheralBaseAddr = (uint32_t) 0x4001204c;           // TODO (m): replace constant
+	DMAInit.DMA_PeripheralBaseAddr = ADC1_DR_ADDRESS;  
 	DMAInit.DMA_Memory0BaseAddr	   = (uint32_t) samplesBuffer;        // Copy data from the buffer
 	DMAInit.DMA_DIR	               = DMA_DIR_PeripheralToMemory;
 	DMAInit.DMA_BufferSize         = samples;                         // 
@@ -38,8 +43,11 @@ void init_ADC(volatile uint16_t *samplesBuffer, int samples) {
 	DMAInit.DMA_PeripheralBurst    = DMA_PeripheralBurst_Single;
 
 	// Initialize the DMA
-	DMA_Init( DMA2_Stream0, &DMAInit );
-	DMA_Cmd( DMA2_Stream0 , ENABLE );
+	DMA_Init(DMA2_Stream0, &DMAInit);
+	DMA_Cmd(DMA2_Stream0 , ENABLE);
+
+
+
 
 	//DMA_ADC1 = DMA2_Stream0;
 
@@ -47,27 +55,26 @@ void init_ADC(volatile uint16_t *samplesBuffer, int samples) {
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE);
 
 	// The things that are shared between the three ADCs
-
 	ADC_CommonInitTypeDef common = {0, };
-	common.ADC_Mode = ADC_Mode_Independent;
+	common.ADC_Mode      = ADC_Mode_Independent;
 	common.ADC_Prescaler = ADC_Prescaler_Div2;
-	ADC_CommonInit( &common );
+	ADC_CommonInit(&common);
 
 	// The things specific to ADC1
 	ADC_InitTypeDef adc = {0, };
-	adc.ADC_Resolution = ADC_Resolution_12b;
-	adc.ADC_ScanConvMode = DISABLE; // Disable scanning multiple channels
-	adc.ADC_ContinuousConvMode = DISABLE; // Disable ADC free running
+	adc.ADC_Resolution           = ADC_Resolution_12b;
+	adc.ADC_ScanConvMode         = DISABLE; // Disable scanning multiple channels
+	adc.ADC_ContinuousConvMode   = DISABLE; // Disable ADC free running
 	adc.ADC_ExternalTrigConvEdge = ADC_ExternalTrigConvEdge_Rising;
-	adc.ADC_ExternalTrigConv = ADC_ExternalTrigConv_T2_TRGO; // Trigger of TIM2
-	adc.ADC_DataAlign = ADC_DataAlign_Right;
-	adc.ADC_NbrOfConversion = 1;
-	ADC_Init( ADC1, &adc );
-	ADC_DMACmd( ADC1, ENABLE ); // Enable generating DMA requests
+	adc.ADC_ExternalTrigConv     = ADC_ExternalTrigConv_T2_TRGO; // Trigger of TIM2
+	adc.ADC_DataAlign            = ADC_DataAlign_Right;
+	adc.ADC_NbrOfConversion      = 1;
+	ADC_Init(ADC1, &adc);
+	ADC_DMACmd(ADC1, ENABLE); // Enable generating DMA requests
 	ADC_DMARequestAfterLastTransferCmd(ADC1, ENABLE);
 
 	// Configure the channel from which to sample
-	ADC_RegularChannelConfig( ADC1, ADC_Channel_1, 1, ADC_SampleTime_3Cycles);
+	ADC_RegularChannelConfig(ADC1, ADC_Channel_1, 1, ADC_SampleTime_3Cycles);
 
 	// NVIC config
 	NVIC_InitTypeDef NVIC_InitStructure;
