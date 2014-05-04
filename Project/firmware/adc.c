@@ -54,6 +54,7 @@ void init_ADC(uint16_t volatile *adc1buf, uint16_t volatile *adc2buf, int sample
 
 	//Enable the clock to the ADC
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE);
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC2, ENABLE);
 
 	// The things that are shared between the three ADCs
 	ADC_CommonInitTypeDef common = {0, };
@@ -73,9 +74,13 @@ void init_ADC(uint16_t volatile *adc1buf, uint16_t volatile *adc2buf, int sample
 	ADC_Init(ADC1, &adc);
 	ADC_DMACmd(ADC1, ENABLE); // Enable generating DMA requests
 	ADC_DMARequestAfterLastTransferCmd(ADC1, ENABLE);
+	ADC_RegularChannelConfig(ADC1, ADC_Channel_1, 1, ADC_SampleTime_3Cycles); // Configure the channel from which to sample
 
-	// Configure the channel from which to sample
-	ADC_RegularChannelConfig(ADC1, ADC_Channel_1, 1, ADC_SampleTime_3Cycles);
+	// The things specific to ADC2
+	ADC_Init(ADC2, &adc);
+	ADC_DMACmd(ADC2, ENABLE); // Enable generating DMA requests
+	ADC_DMARequestAfterLastTransferCmd(ADC2, ENABLE);
+	ADC_RegularChannelConfig(ADC2, ADC_Channel_1, 1, ADC_SampleTime_3Cycles); // Configure the channel from which to sample
 
 	// NVIC config
 	NVIC_InitTypeDef NVIC_InitStructure;
@@ -89,8 +94,10 @@ void init_ADC(uint16_t volatile *adc1buf, uint16_t volatile *adc2buf, int sample
 	ADC_ClearITPendingBit(ADC1 , ADC_IT_OVR);
 
 	ADC_Cmd( ADC1, ENABLE );
+	ADC_Cmd( ADC2, ENABLE );
 
 	ADC_SoftwareStartConv(ADC1);
+	ADC_SoftwareStartConv(ADC2);
 }
 
 void ADC_IRQHandler(void) {
